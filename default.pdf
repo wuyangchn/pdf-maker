@@ -1,0 +1,87 @@
+%PDF-1.7
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R 7 0 R]
+/Count 2
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 1000 1000]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+4 0 obj
+<<
+>>
+stream
+BT
+/ 12 Tf
+100 100 Td
+(This is created by PDF-tool!) Tj
+ET
+endstream
+endobj
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/Name /F1
+/BaseFont /Helvetica
+>>
+endobj
+6 0 obj
+<<
+>>
+stream
+BT
+/ 24 Tf
+100 100 Td
+(This is the second page) Tj
+ET
+endstream
+endobj
+7 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 1000 300]
+/Contents 6 0 R
+/Resources <<
+/Font <<
+/  0 R
+>>
+>>
+>>
+endobj
+xref
+0 7
+0000000009 00000 n
+0000000058 00000 n
+0000000121 00000 n
+0000000249 00000 n
+0000000346 00000 n
+0000000426 00000 n
+0000000518 00000 n
+trailer
+<<
+/Size 7
+/Root 1 0 R
+>>
+startxref
+642
+%%EOF
