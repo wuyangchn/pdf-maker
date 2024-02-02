@@ -9,9 +9,17 @@
 #
 # 
 """
-from .objs import Obj
+from .objs import Obj, Resources, Text, Line, Rect
 from .crf import Crf
 from typing import List, Union
+
+
+COLOR_PALETTE: dict = {
+    "black": [0, 0, 0],
+    "red": [1, 0, 0],
+    "green": [0, 1, 0],
+    "blue": [0, 0, 1],
+}
 
 
 class NewPDF:
@@ -27,34 +35,45 @@ class NewPDF:
         self.filepath = ""
 
         self.content_bytes = b""
+        self.content_str = ""
         self.component = []
-        self.text = []
         self.frame = []
         self.axis_area = [138, 400, 360, 270]  # x0, y0, w, h
 
-        self.all_types = ["Catalog", "Pages", "Page", "Font"]
-        self.all_fonts = ["Helvetica"]
-        self.default_text = [{
-            "Tf": {"name": "", "index": "", "size": "12"},
-            "Td": {"x": "100", "y": "100"},
-            "Tj": {"text": "This is created by PDF-tool!"},
-        }]
-        self.default_resources = {
-            "font": {"name": "F1", "index": "5"}
-        }
+        # self.default_text = [{
+        #     "Tf": {"name": "", "index": "", "size": "12"},
+        #     "Td": {"x": "100", "y": "100"},
+        #     "Tj": {"text": "This is created by PDF-tool!"},
+        # }]
+        # self.default_resources = {
+        #     "font": {"name": "F1", "index": "5"}
+        # }
         self.default_page_size = [0, 0, 612, 792]
 
         catalog = Obj(type="catalog", index="1", pages="2")
         pages = Obj(type="pages", index="2", kids=[3])
-        page = Obj(type="page", index="3", parent="2", resources=self.default_resources,
+        page = Obj(type="page", index="3", parent="2", resources=Resources(font="F1", font_index="5").to_dict(),
                    contents="4", mediabox=self.default_page_size)
-        stream = Obj(type="", index="4", text=self.default_text)
-        font = Obj(type="font", index="5", subtype="Type1", name="F1", basefont="Helvetica")
+        stream = Obj(type="", index="4", text=[])
+        font = Obj(type="font", index="5", subtype="Type1", name="F1", basefont="arial")
 
         self._objs = [catalog, pages, page, stream, font]
 
         for key, value in options.items():
             setattr(self, key, value)
+
+    def del_obj(self, index: int):
+        found = False
+        for obj in self._objs:
+            if obj.index() == str(index):
+                self._objs.remove(obj)
+                found = True
+                break
+        if not found:
+            return
+        if obj.get_type() == "Page":
+            pages = self.get_obj(type="Pages")[0]
+            pages.remove_kid(obj.index())
 
     def add_obj(self, index: Union[str, int] = None, type: str = None, obj: Obj = None, **options):
         if obj is None:
@@ -62,14 +81,34 @@ class NewPDF:
         if self.check_obj(obj, self._objs):
             self._objs.append(obj)
         if obj.get_type() == "Page":
-            pages = self.get_obj(type="Pages")
+            pages = self.get_obj(type="Pages")[0]
             pages.kids(obj.index())
+
+    def add_page(self, contents_index: int = None, size: Union[tuple, list] = None, resources: dict = None):
+        if size is None:
+            size = [612, 792]
+        if resources is None:
+            resources = {}
+        contents_index = "" if contents_index is not None else str(contents_index)
+        pages_index = self.get_obj(type="Pages")[0].index()
+        new_index = max([int(obj.index()) for obj in self._objs]) + 1
+        new_page = Obj(type="page", index=f"{new_index}", parent=f"{pages_index}",
+                       contents=f"{contents_index}", mediabox=[0, 0, *size], resources=resources)
+        self.add_obj(obj=new_page)
 
     def get_obj(self, type: str = None, index: int = None):
         if type is not None:
-            return [obj for obj in self._objs if obj.get_type() == type.capitalize()][0]
+            return [obj for obj in self._objs if obj.get_type() == type.capitalize()]
         if index is not None:
             return [obj for obj in self._objs if obj.index() == str(index)][0]
+
+    def get_page(self, index: int):
+        for num, obj in enumerate(self.get_obj(type="Page")):
+            if num == index:
+                return obj
+
+    def get_page_indexes(self):
+        return [obj.index() for obj in self.get_obj("Page")]
 
     def check_obj(self, obj, objs):
         if obj is None:
@@ -120,6 +159,38 @@ class NewPDF:
         """
         page = [obj for obj in self._objs if obj.get_type() == "Page"][index]
         page.set_page_size(width=width, height=height)
+
+    def text(self, page: int, x: int, y: int, text: str, size: int = 12, **options):
+        page = self.get_page(index=page)
+        font_name = page.get_font_name()
+        font = self.get_obj(type="Font")[0].get_basefont()
+        contents_page = self.get_obj(index=page.get_contents_index())
+        contents_page.text(Text(font_name=font_name, size=size, x=x, y=y, text=text, font=font, **options))
+
+    def line(self, page: int, start: List[int], end: List[int], width: Union[float, int] = None,
+             color: Union[tuple, list, str] = None):
+        if width is None:
+            width = 0.5
+        if color is None:
+            color = "black"
+        if isinstance(color, str):
+            color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
+        page = self.get_page(index=page)
+        contents_page = self.get_obj(index=page.get_contents_index())
+        contents_page.line(Line(start=start, end=end, color=color, width=width).to_dict())
+
+    def rect(self, page: int, left_bottom: Union[list, tuple], width: int, height: int,
+             line_width: Union[float, int] = None, color: Union[tuple, list, str] = None):
+        if line_width is None:
+            line_width = 0.5
+        if color is None:
+            color = "black"
+        if isinstance(color, str):
+            color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
+        page = self.get_page(index=page)
+        contents_page = self.get_obj(index=page.get_contents_index())
+        contents_page.rect(Rect(
+            *left_bottom, width=width, height=height, line_width=line_width, color=color).to_dict())
 
     def header(self, header: str = None):
         if header is not None:
@@ -234,65 +305,6 @@ class NewPDF:
         self.frame.append(frame)
         return frame
 
-    def set_text(self):
-        text = ''
-        x0, y0, w, h = self.axis_area
-        # Figure Title
-        text += f'BT\r1 0 0 1 {x0 + 10} {y0 - 20 + h} Tm\n/F1 12 Tf\r({self.sample.Info.sample.name}) Tj\rET\r'
-        if self.figure._type == 'isochron':
-            xaxis_title_number = ''.join(list(filter(str.isdigit, self.figure.xaxis.title.text)))
-            yaxis_title_number = ''.join(list(filter(str.isdigit, self.figure.yaxis.title.text)))
-            # X axis title
-            x_title_length = 5 * 12  # length * font point size
-            text += '\n'.join([
-                'BT', f'1 0 0 1 {x0 + w / 2 - x_title_length / 2} {y0 - 30} Tm',
-                # % 使用Tm将文本位置设置为（35,530）前四个参数是cosx, sinx, -sinx, cosx表示逆时针旋转弧度
-                '/F1 8 Tf', '5 Ts', f'({xaxis_title_number[:2]}) Tj', '/F1 12 Tf', '0 Ts', '(Ar / ) Tj',
-                '/F1 8 Tf', '5 Ts', f'({xaxis_title_number[2:4]}) Tj', '/F1 12 Tf', '0 Ts', '(Ar) Tj', 'ET',
-            ])
-            # Y axis title
-            y_title_length = 5 * 12  # length * font point size
-            text += '\n'.join([
-                'BT', f'0 1 -1 0 {x0 - 40} {y0 + h / 2 - y_title_length / 2} Tm',
-                # % 使用Tm将文本位置设置为（35,530）前四个参数是cosx, sinx, -sinx, cosx表示逆时针旋转弧度
-                '/F1 8 Tf', '5 Ts', f'({yaxis_title_number[:2]}) Tj', '/F1 12 Tf', '0 Ts', '(Ar / ) Tj',
-                '/F1 8 Tf', '5 Ts', f'({yaxis_title_number[2:4]}) Tj', '/F1 12 Tf', '0 Ts', '(Ar) Tj', 'ET',
-            ])
-
-        elif self.figure._type == 'spectra':
-            # X axis title
-            x_title_length = 13 * 12  # length * font point size
-            text += '\n'.join([
-                'BT', f'1 0 0 1 {x0 + w / 2 - x_title_length / 2} {y0 - 30} Tm',
-                '/F1 12 Tf', '0 Ts', '(Cumulative ) Tj', '/F1 8 Tf', '5 Ts', f'(39) Tj',
-                '/F1 12 Tf', '0 Ts', '(Ar Released (%)) Tj', 'ET',
-            ])
-            # Y axis title
-            y_title_length = 9 * 12  # length * font point size
-            text += '\n'.join([
-                'BT', f'0 1 -1 0 {x0 - 40} {y0 + h / 2 - y_title_length / 2} Tm',
-                '/F1 12 Tf', '0 Ts', f'(Apparent Age (Ma)) Tj', 'ET',
-            ])
-            # Text 1
-            info = self.figure.set1.info
-            if len(info) == 8 and self.figure.text1.text != '':
-                sum39 = findall('∑{sup|39}Ar = (.*)', self.figure.text1.text)[1]
-                text += '\n'.join([
-                    'BT', f'1 0 0 1 {x0 + w / 4} {y0 + h / 2} Tm',
-                    '/F1 12 Tf', '0 Ts', f'(t) Tj', '/F1 8 Tf', '-2 Ts', f'(p) Tj',
-                    '/F1 12 Tf', '0 Ts',
-                    f'( = {info[4]:.2f} <261> {info[6]:.2f} Ma, MSMD = {info[3]:.2f}, ∑) Tj',
-                    '/F1 8 Tf', '5 Ts', f'(39) Tj',
-                    '/F1 12 Tf', '0 Ts',
-                    f'(Ar = {sum39}) Tj',
-                    'ET',
-                ])
-            # Text 2
-            text2 = findall('∑{sup|39}Ar = (.*)', self.figure.text2.text)[1]
-
-        self.text.append(text)
-        return text
-
     def set_split_line(self):
         others = []
         for i in range(200):
@@ -348,38 +360,4 @@ class NewPDF:
             '% <texts>\r' + '\r\n'.join(self.text)
         )
 
-    def get_pdf(self):
-        self.do_function(
-            self.set_main_content,
-            self.set_axis_frame,
-            self.set_text,
-            self.set_info,
-            self.set_replace,
-            # self.set_split_line,
-            self.toByte,
-            self.save,
-        )
 
-    def get_contents(self):
-        self.do_function(
-            self.set_main_content,
-            self.set_axis_frame,
-            self.set_text,
-        )
-        return {
-            'component': self.component,
-            'frame': self.frame,
-            'text': self.text,
-        }
-
-    def toByte(self):
-        self.content_bytes = self.content_str.encode('utf-8')
-        return self.content_bytes
-
-    def do_function(self, *handlers):
-        for handler in handlers:
-            try:
-                handler()
-            except Exception:
-                print(traceback.format_exc())
-                continue

@@ -8,5 +8,5 @@
 # 
 """
 
-from .core.main import NewPDF, Obj
+from .core.main import NewPDF, Obj, Text
 
