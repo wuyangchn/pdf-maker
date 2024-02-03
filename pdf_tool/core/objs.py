@@ -9,7 +9,7 @@
 #
 # 
 """
-from typing import List, Union
+from typing import List, Union, Set
 import re
 from fontTools.ttLib import TTFont
 from ._global import FONT_LIB, COLOR_PALETTE
@@ -88,7 +88,7 @@ class Text(BaseContent):
     def read_color(self, rich_text):
         for name, value in COLOR_PALETTE.items():
             if rich_text.startswith(f"<{name}>") and rich_text.endswith(f"</{name}>"):
-                return [(rich_text.lstrip(f"<{name}>").rstrip(f"</{name}>"), ' '.join([str(i) for i in value]))]
+                return [(rich_text.removeprefix(f"<{name}>").removesuffix(f"</{name}>"), ' '.join([str(i) for i in value]))]
 
             if f"<{name}>" in rich_text and f"</{name}>" in rich_text:
                 reg = f"(<{name}>.*?</{name}>)"
@@ -99,9 +99,9 @@ class Text(BaseContent):
 
     def read_script(self, rich_text):
         if rich_text.startswith("<sub>") and rich_text.endswith("</sub>"):
-            return [(rich_text.lstrip("<sub>").rstrip("</sub>"), "sub")]
+            return [(rich_text.removeprefix("<sub>").removesuffix("</sub>"), "sub")]
         if rich_text.startswith("<sup>") and rich_text.endswith("</sup>"):
-            return [(rich_text.lstrip("<sup>").rstrip("</sup>"), "sup")]
+            return [(rich_text.removeprefix("<sup>").removesuffix("</sup>"), "sup")]
         if "<sub>" in rich_text and "</sub>" in rich_text:
             text_list = re.split(r"(<sub>.*?</sub>)", rich_text)
             return [i for item in text_list for i in self.read_script(item)]
@@ -277,7 +277,7 @@ class Obj:
         self._name = ""
         self._index: int = index
         self._type: str = type
-        self._kids: List[int] = []
+        self._kids: List[str] = []
         self._parent: Union[int, str] = ""
         self._contents: Union[int, str] = ""
         self._length: Union[int, str] = ""
@@ -344,17 +344,18 @@ class Obj:
             return ""
         return f"/Pages {self._pages} 0 R\n"
 
-    def count(self):
-        return len(self._kids)
-
-    def kids(self, kids: Union[List[int], int] = None):
+    def kids(self, kids: Union[list, int, str] = None):
         if self.get_type() != "Pages":
             return ""
         if kids is not None:
             if isinstance(kids, (int, str)):
                 kids = [kids]
-            self._kids = self._kids + kids
-        kids = ' '.join([f'{i} 0 R' for i in self._kids])
+            kids = [str(i) for i in kids]
+        else:
+            kids = []
+        for kid in kids:
+            self._kids.append(kid)
+        kids = ' '.join([f"{i} 0 R" for i in self._kids])
         return f"/Kids [{kids}]\n/Count {len(self._kids)}\n"
 
     def parent(self, parent: int = None):
@@ -386,7 +387,7 @@ class Obj:
         return f"/Resources <<\n{resources}>>\n"
 
     def length(self, length: int = None):
-        if self.get_type() != "":
+        if self.get_type() != "" or self.get_type() != "Stream":
             return ""
         content = self.stream()
         content = content.rstrip("\n")
@@ -527,12 +528,14 @@ class Obj:
         return self._contents
 
     def get_font_name(self):
-        return self._resources.font
+        if self.get_type() == "Page":
+            return self._resources.font
+        elif self.get_type() == "Font":
+            return self._name
 
     def remove_kid(self, index: Union[str, int]):
-        kids = [str(i) for i in self._kids]
-        kids.remove(str(index))
-        self._kids = kids
+        if str(index) in self._kids:
+            self._kids.remove(str(index))
 
     def get_basefont(self):
         return self._basefont

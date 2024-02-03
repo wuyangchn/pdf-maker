@@ -11,6 +11,7 @@
 """
 from .objs import Obj, Resources, Text, Line, Rect, Scatter
 from .crf import Crf
+from ._global import PAGE_SIZE
 from typing import List, Union
 
 
@@ -32,7 +33,10 @@ class NewPDF:
         self._body = ""
 
         self.title = "NewPDF"
-        self.page_size = (400, 800)
+        self.author = ""
+        self.producer = "PDF-Tool"
+        self.creator = "Manually"
+        self.page_size = (595, 842)
         self.filepath = ""
 
         self.content_bytes = b""
@@ -41,26 +45,26 @@ class NewPDF:
         self.frame = []
         self.axis_area = [138, 400, 360, 270]  # x0, y0, w, h
 
-        self.default_page_size = [0, 0, 612, 792]
-
         for key, value in options.items():
             setattr(self, key, value)
+
+        if isinstance(self.page_size, str):
+            self.page_size = PAGE_SIZE.get(self.page_size.lower(), (595, 842))
 
         # default obj: catalog
         self.add_obj(obj=Obj(type="catalog", index="1", pages="2"))
         # default obj: pages
-        self.add_obj(obj=Obj(type="pages", index="2", kids=[3]))
+        self.add_obj(obj=Obj(type="pages", index="2", kids=[]))
         # default obj: one page
         self.add_obj(obj=Obj(type="page", index="3", parent="2", contents="4",
-                             mediabox=self.default_page_size), resources=Resources(font="F1", font_index="5"))
-        print(self.get_obj(index=3)._resources)
+                             mediabox=[0, 0, *self.page_size], resources=Resources(font="F1", font_index="5")))
         # default obj: stream
         self.add_obj(obj=Obj(type="", index="4", text=[]))
         # default obj: font
         self.add_obj(obj=Obj(type="font", index="5", subtype="Type1", name="F1", basefont="arial"))
         # default obj: info
         self.add_obj(obj=Obj(type="Info", index="6", title=self.title, author="Yang",
-                             producer="PDF-Tool", creator="Manually"))
+                             producer=self.producer, creator=self.creator))
 
     def del_obj(self, index: int):
         found = False
@@ -76,38 +80,43 @@ class NewPDF:
             pages.remove_kid(obj.index())
 
     def add_obj(self, index: Union[str, int] = None, type: str = None, obj: Obj = None, **options):
+        if index is None:
+            index = (lambda objs: max([int(obj.index()) for obj in objs]) if len(objs) > 0 else 0)(self._objs) + 1
         if obj is None:
-            obj = Obj(index=index, type=type, **options)
+            obj = Obj(index=str(index), type=type, **options)
         if self.check_obj(obj, self._objs):
             self._objs.append(obj)
         if obj.get_type() == "Page":
-            pages = self.get_obj(type="Pages")[0]
+            pages = self.get_obj(index=obj._parent)
             pages.kids(obj.index())
+        return obj
 
-    def add_page(self, contents_index: int = None, size: Union[tuple, list] = None, resources: Resources = None):
+    def add_page(self, contents_index: Union[int, str] = None, size: Union[tuple, list, str] = None,
+                 resources: Resources = None):
         if size is None:
-            size = [612, 792]
+            size = "a4"
+        if isinstance(size, str):
+            size = PAGE_SIZE.get(size, (595, 842))
         if resources is None:
             font = self.get_obj(type="font")[0]
             resources = Resources(font=font._name, font_index=font.index())
-        contents_index = "" if contents_index is not None else str(contents_index)
+        if contents_index is None:
+            contents = self.add_obj(type="Stream")
+        else:
+            contents = self.get_obj(index=str(contents_index))
         pages_index = self.get_obj(type="Pages")[0].index()
-        new_index = max([int(obj.index()) for obj in self._objs]) + 1
-        new_page = Obj(type="page", index=f"{new_index}", parent=f"{pages_index}",
-                       contents=f"{contents_index}", mediabox=[0, 0, *size], resources=resources)
-        self.add_obj(obj=new_page)
+        return self.add_obj(type="page", parent=f"{pages_index}", contents=f"{contents.index()}",
+                            mediabox=[0, 0, *size], resources=resources)
 
-    def get_obj(self, type: str = None, index: int = None):
+    def get_obj(self, type: str = None, index: Union[str, int] = None):
         if type is not None:
             return [obj for obj in self._objs if obj.get_type() == type.capitalize()]
         if index is not None:
             return [obj for obj in self._objs if obj.index() == str(index)][0]
         raise ValueError("Object not found.")
 
-    def get_page(self, index: int):
-        for num, obj in enumerate(self.get_obj(type="Page")):
-            if num == index:
-                return obj
+    def get_page(self, index: int, base: int = 1):
+        return self.get_obj(type="Page")[int(int(index) - int(base))]
 
     def get_page_indexes(self):
         return [obj.index() for obj in self.get_obj("Page")]
@@ -162,8 +171,8 @@ class NewPDF:
         page = [obj for obj in self._objs if obj.get_type() == "Page"][index]
         page.set_page_size(width=width, height=height)
 
-    def text(self, page: int, x: int, y: int, text: str, size: int = 12, **options):
-        page = self.get_page(index=page)
+    def text(self, page: int, x: int, y: int, text: str, size: int = 12, base: int = 1, **options):
+        page = self.get_page(index=page, base=base)
         font_name = page.get_font_name()
         font = self.get_obj(type="Font")[0].get_basefont()
         contents_page = self.get_obj(index=page.get_contents_index())
@@ -245,146 +254,15 @@ class NewPDF:
                 return ""
         root = _get_obj(type="Catalog")
         info = _get_obj(type="Info")
-        return f"trailer\n<<\n" \
-               f"/Size {self._crf.size()}\n" \
-               f"/Root {root}\n" \
-               f"/Info {info}\n" \
-               f">>\nstartxref\n{self._crf.startoffset()}\n%%EOF\n"
+        self._trailer = f"trailer\n<<\n" \
+                        f"/Size {self._crf.size()}\n" \
+                        f"/Root {root}\n" \
+                        f"/Info {info}\n" \
+                        f">>\nstartxref\n{self._crf.startoffset()}\n%%EOF\n"
+        return self._trailer
 
-    def update_crf(self):
-        pass
-
-    def _xmin(self):
-        return float(0)
-
-    def _xmax(self):
-        return float(100)
-
-    def _ymin(self):
-        return float(0)
-
-    def _ymax(self):
-        return float(100)
-
-    def _get_transfer_pos(self, x, y):
-        x0, y0, w, h = self.axis_area
-        x = (x - self._xmin()) / (self._xmax() - self._xmin()) * w + x0
-        y = (y - self._ymin()) / (self._ymax() - self._ymin()) * h + y0
-        return [x, y]
-
-    def _get_isochron_line(self, point1, point2, color='1 0 0', width=1):
-        line_str = ''
-        if not len(point1) == len(point2) == 2:
-            return line_str
-        x0, y0, w, h = self.axis_area
-
-        def _get_line_points(k, m):
-            if k == 0:
-                return [
-                    [x0, m], [x0 + w, m]
-                ]
-            return [
-                [x0, x0 * k + m], [x0 + w, (x0 + w) * k + m],
-                [(y0 - m) / k, y0], [(y0 + h - m) / k, y0 + h]
-            ]
-
-        point_1 = self._get_transfer_pos(*point1)
-        point_2 = self._get_transfer_pos(*point2)
-        k = (point_2[1] - point_1[1]) / (point_2[0] - point_1[0])
-        m = point_2[1] - point_2[0] * k
-        line = []
-        for point in _get_line_points(k, m):
-            if self.is_in_area(*point):
-                line.append(point)
-        if len(line) == 2:
-            line_str = f'{width} w\r{color} RG\r{line[0][0]} {line[0][1]} m {line[1][0]} {line[1][1]} l S\r'
-        return line_str
-
-    def is_in_area(self, x, y):
-        x0, y0, w, h = self.axis_area
-        if x == -999:
-            x = x0
-        if y == -999:
-            y = y0
-        return x0 <= x <= x0 + w and y0 <= y <= y0 + h
-
-    def set_axis_frame(self):
-        from decimal import Decimal
-        frame = ''
-        x0, y0, w, h = self.axis_area
-        frame += f'1 w\r0 0 0 RG\r{x0} {y0} {w} {h} re S\r'  # % 四个参数：最小x，最小y，宽度和高度
-
-        xmin, xmax = float(self.figure.xaxis.min), float(self.figure.xaxis.max)
-        nx, dx = int(self.figure.xaxis.split_number), float(self.figure.xaxis.interval)
-        ymin, ymax = float(self.figure.yaxis.min), float(self.figure.yaxis.max)
-        ny, dy = int(self.figure.yaxis.split_number), float(self.figure.yaxis.interval)
-
-        for i in range(ny + 1):
-            yi = y0 + i * h * dy / (ymax - ymin)
-            if self.is_in_area(-999, yi):
-                frame += f'{x0} {yi} m {x0 - 4} {yi} l S\r'
-                frame += f'BT\r1 0 0 1 {x0 - 4 - 32} {yi - 4} Tm\r/F1 12 Tf\r0 0 0 rg\r({Decimal(str(ymin)) + i * Decimal(str(dy))}) Tj\rET\r'
-        for i in range(nx + 1):
-            xi = x0 + i * w * dx / (xmax - xmin)
-            if self.is_in_area(xi, -999):
-                frame += f'{xi} {y0} m {xi} {y0 - 4} l S\r'
-                frame += f'BT\r1 0 0 1 {xi - 12} {y0 - 16} Tm\r/F1 12 Tf\r0 0 0 rg\r({Decimal(str(xmin)) + i * Decimal(str(dx))}) Tj\rET\r'
-        self.frame.append(frame)
-        return frame
-
-    def set_split_line(self):
-        others = []
-        for i in range(200):
-            if i * 50 >= self.page_size[0]:
-                break
-            others.append(f'[2] 0 d\n{i * 50} 0 m {i * 50} {self.page_size[1]} l S')
-        for i in range(200):
-            if i * 50 >= self.page_size[1]:
-                break
-            others.append(f'[2] 0 d\n0 {i * 50} m {self.page_size[0]} {i * 50} l S')
-        self.content_str = self.content_str.replace(
-            '% <flag: others>\r',
-            '% <flag: others>\r' + '0.75 G\n' + '\n'.join(others),
-        )
-
-    def set_info(self):
-        from datetime import datetime, timezone, timedelta
-        date = str(datetime.now(tz=timezone(offset=timedelta(hours=8))))
-        date = findall('(.*)-(.*)-(.*) (.*):(.*):(.*)\.(.*)', date)[0]
-        date = ''.join(date[0:6])
-        date = 'D:' + date + "+08'00'"
-        self.content_str = self.content_str.replace(
-            '% <flag: info CreationDate>',
-            f"{date}",
-        )
-        self.content_str = self.content_str.replace(
-            '% <flag: info ModDate>',
-            f"{date}",
-        )
-
-        self.content_str = self.content_str.replace(
-            '% <flag: info Title>',
-            f'{self.sample.Info.sample.name} - {self.figure.name}'
-        )
-        self.content_str = self.content_str.replace(
-            '% <flag: page title>\r',
-            '% <flag: page title>\r' +
-            f'(<This is a demo of the exported PDF.>) Tj T*\n'
-            f'(<The PDFs can be freely edited in Adobe Illustrator.>) Tj\n'
-        )
-
-    def set_replace(self):
-        self.content_str = self.content_str.replace(
-            '% <main contents>\r',
-            '% <main contents>\r' + '\r\n'.join(self.component)
-        )
-        self.content_str = self.content_str.replace(
-            '% <frames>\r',
-            '% <frames>\r' + '\r\n'.join(self.frame)
-        )
-        self.content_str = self.content_str.replace(
-            '% <texts>\r',
-            '% <texts>\r' + '\r\n'.join(self.text)
-        )
-
+    def move_page(self, from_index: int, to_index: int, base: int = 1):
+        pages = self.get_obj(type="Pages")[0]
+        page = pages._kids.pop(from_index - base)
+        pages._kids.insert(to_index - base, page)
 
