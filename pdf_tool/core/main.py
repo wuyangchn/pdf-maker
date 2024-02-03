@@ -9,7 +9,7 @@
 #
 # 
 """
-from .objs import Obj, Resources, Text, Line, Rect
+from .objs import Obj, Resources, Text, Line, Rect, Scatter
 from .crf import Crf
 from typing import List, Union
 
@@ -30,7 +30,8 @@ class NewPDF:
         self._crf: Crf = ...
         self._header = "%PDF-1.7\n"
         self._body = ""
-        self.name = "PDF"
+
+        self.title = "NewPDF"
         self.page_size = (400, 800)
         self.filepath = ""
 
@@ -40,27 +41,26 @@ class NewPDF:
         self.frame = []
         self.axis_area = [138, 400, 360, 270]  # x0, y0, w, h
 
-        # self.default_text = [{
-        #     "Tf": {"name": "", "index": "", "size": "12"},
-        #     "Td": {"x": "100", "y": "100"},
-        #     "Tj": {"text": "This is created by PDF-tool!"},
-        # }]
-        # self.default_resources = {
-        #     "font": {"name": "F1", "index": "5"}
-        # }
         self.default_page_size = [0, 0, 612, 792]
-
-        catalog = Obj(type="catalog", index="1", pages="2")
-        pages = Obj(type="pages", index="2", kids=[3])
-        page = Obj(type="page", index="3", parent="2", resources=Resources(font="F1", font_index="5").to_dict(),
-                   contents="4", mediabox=self.default_page_size)
-        stream = Obj(type="", index="4", text=[])
-        font = Obj(type="font", index="5", subtype="Type1", name="F1", basefont="arial")
-
-        self._objs = [catalog, pages, page, stream, font]
 
         for key, value in options.items():
             setattr(self, key, value)
+
+        # default obj: catalog
+        self.add_obj(obj=Obj(type="catalog", index="1", pages="2"))
+        # default obj: pages
+        self.add_obj(obj=Obj(type="pages", index="2", kids=[3]))
+        # default obj: one page
+        self.add_obj(obj=Obj(type="page", index="3", parent="2", contents="4",
+                             mediabox=self.default_page_size), resources=Resources(font="F1", font_index="5"))
+        print(self.get_obj(index=3)._resources)
+        # default obj: stream
+        self.add_obj(obj=Obj(type="", index="4", text=[]))
+        # default obj: font
+        self.add_obj(obj=Obj(type="font", index="5", subtype="Type1", name="F1", basefont="arial"))
+        # default obj: info
+        self.add_obj(obj=Obj(type="Info", index="6", title=self.title, author="Yang",
+                             producer="PDF-Tool", creator="Manually"))
 
     def del_obj(self, index: int):
         found = False
@@ -84,11 +84,12 @@ class NewPDF:
             pages = self.get_obj(type="Pages")[0]
             pages.kids(obj.index())
 
-    def add_page(self, contents_index: int = None, size: Union[tuple, list] = None, resources: dict = None):
+    def add_page(self, contents_index: int = None, size: Union[tuple, list] = None, resources: Resources = None):
         if size is None:
             size = [612, 792]
         if resources is None:
-            resources = {}
+            font = self.get_obj(type="font")[0]
+            resources = Resources(font=font._name, font_index=font.index())
         contents_index = "" if contents_index is not None else str(contents_index)
         pages_index = self.get_obj(type="Pages")[0].index()
         new_index = max([int(obj.index()) for obj in self._objs]) + 1
@@ -101,6 +102,7 @@ class NewPDF:
             return [obj for obj in self._objs if obj.get_type() == type.capitalize()]
         if index is not None:
             return [obj for obj in self._objs if obj.index() == str(index)][0]
+        raise ValueError("Object not found.")
 
     def get_page(self, index: int):
         for num, obj in enumerate(self.get_obj(type="Page")):
@@ -165,10 +167,12 @@ class NewPDF:
         font_name = page.get_font_name()
         font = self.get_obj(type="Font")[0].get_basefont()
         contents_page = self.get_obj(index=page.get_contents_index())
-        contents_page.text(Text(font_name=font_name, size=size, x=x, y=y, text=text, font=font, **options))
+        text = Text(font_name=font_name, size=size, x=x, y=y, text=text, font=font, **options)
+        contents_page.text(text)
+        return text
 
     def line(self, page: int, start: List[int], end: List[int], width: Union[float, int] = None,
-             color: Union[tuple, list, str] = None):
+             color: Union[tuple, list, str] = None, **options):
         if width is None:
             width = 0.5
         if color is None:
@@ -177,10 +181,13 @@ class NewPDF:
             color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
         page = self.get_page(index=page)
         contents_page = self.get_obj(index=page.get_contents_index())
-        contents_page.line(Line(start=start, end=end, color=color, width=width).to_dict())
+        line = Line(start=start, end=end, color=color, width=width, **options)
+        contents_page.line(line)
+        return line
 
     def rect(self, page: int, left_bottom: Union[list, tuple], width: int, height: int,
-             line_width: Union[float, int] = None, color: Union[tuple, list, str] = None):
+             line_width: Union[float, int] = None, color: Union[tuple, list, str] = None,
+             **options):
         if line_width is None:
             line_width = 0.5
         if color is None:
@@ -189,8 +196,21 @@ class NewPDF:
             color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
         page = self.get_page(index=page)
         contents_page = self.get_obj(index=page.get_contents_index())
-        contents_page.rect(Rect(
-            *left_bottom, width=width, height=height, line_width=line_width, color=color).to_dict())
+        rect = Rect(*left_bottom, width=width, height=height, line_width=line_width, color=color, **options)
+        contents_page.rect(rect)
+        return rect
+
+    def scatter(self, page: int, x: int, y: int, size: int = 5, fill_color: Union[tuple, list, str] = None,
+                stroke_color: Union[tuple, list, str] = None, **options):
+        if stroke_color is None:
+            stroke_color = "black"
+        if fill_color is None:
+            fill_color = "grey"
+        page = self.get_page(index=page)
+        contents_page = self.get_obj(index=page.get_contents_index())
+        scatter = Scatter(x=x, y=y, size=size, fill_color=fill_color, stroke_color=stroke_color, **options)
+        contents_page.scatter(scatter)
+        return scatter
 
     def header(self, header: str = None):
         if header is not None:
@@ -218,11 +238,18 @@ class NewPDF:
         return data
 
     def trailer(self):
-        root = 1
-        for obj in self._objs:
-            if obj.type() == "Catalog":
-                root = obj.index()
-        return f"trailer\n<<\n/Size {self._crf.size()}\n/Root {root} 0 R\n>>\nstartxref\n{self._crf.startoffset()}\n%%EOF\n"
+        def _get_obj(type):
+            try:
+                return f"{self.get_obj(type=type)[0].index()} 0 R"
+            except (ValueError, IndexError):
+                return ""
+        root = _get_obj(type="Catalog")
+        info = _get_obj(type="Info")
+        return f"trailer\n<<\n" \
+               f"/Size {self._crf.size()}\n" \
+               f"/Root {root}\n" \
+               f"/Info {info}\n" \
+               f">>\nstartxref\n{self._crf.startoffset()}\n%%EOF\n"
 
     def update_crf(self):
         pass

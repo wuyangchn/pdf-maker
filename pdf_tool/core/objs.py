@@ -13,11 +13,35 @@ from typing import List, Union
 import re
 from fontTools.ttLib import TTFont
 from ._global import FONT_LIB, COLOR_PALETTE
+from datetime import datetime, timezone, timedelta
+from .base import camel_to_snake, snake_to_camel
 
 
-class Text:
+class BaseContent:
+    def __init__(self, **options):
+        self._z_index = 0
+        for key, value in options.items():
+            names = [key, f"_{key.lower()}"]
+            for name in names:
+                if hasattr(self, name) and not callable(getattr(self, name)):
+                    setattr(self, name, value)
+
+        self._code: str = ""
+
+    def code(self):
+        return ""
+
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            return object.__getattribute__(self, f"_{name}")
+
+
+class Text(BaseContent):
     def __init__(self, font_name, size, x, y, text, font, **options):
         self._font_name = font_name
+        self._font = font
         self._size = size
         self._x = x
         self._y = y
@@ -28,27 +52,22 @@ class Text:
         self._sup_Ts = int(self._size * 1. / 3.)
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
         self._line_space = 1.3
+        self._line_height = 0
 
-        for key, value in options.items():
-            names = [key, f"_{key.lower()}"]
-            for name in names:
-                if hasattr(self, name) and not callable(getattr(self, name)):
-                    setattr(self, name, value)
+        super().__init__(**options)
 
+        if isinstance(self._color, str):
+            self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
+
+        self.code()
+
+    def code(self):
         self._line_height = ((abs(self._sub_Ts)) + max(
-            (abs(self._sup_Ts) + self.get_text_height(self._text, font, self._sup_size)),
-            self.get_text_height(self._text, font, self._size))) * self._line_space
-
-        text_list = self.read_rich_text(text)
-        self._rich = "\n".join([f"/{self._font_name} {self.size(script)} Tf\n{color} rg\n{color} RG\n{self.Ts(script)} Ts\n{f'0 -{self._line_height} Td' if r == 'r' else ''}\n({item}) Tj" for (item, script, color, r) in text_list])
-
-    def to_dict(self):
-        return {
-            "Tf": {"name": f"{self._font_name}", "size": f"{self._size}"},
-            "Td": {"x": f"{self._x}", "y": f"{self._y}"},
-            "Tj": {"text": f"{self._text}"},
-            "rich": self._rich
-        }
+            (abs(self._sup_Ts) + self.get_text_height(self._text, self._font, self._sup_size)),
+            self.get_text_height(self._text, self._font, self._size))) * self._line_space
+        text_list = self.read_rich_text(self._text)
+        self._code = f"BT\n{self._x} {self._y} Td\n" + "\n".join([f"/{self._font_name} {self.size(script)} Tf\n{color} rg\n{color} RG\n{self.Ts(script)} Ts\n{f'0 -{self._line_height} Td' if r == 'r' else ''}\n({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
+        return self._code
 
     def size(self, flag: str):
         if flag == "sub": return self._sub_size
@@ -97,8 +116,6 @@ class Text:
             return [(text[0], ""), (text[1], "r")]
         return [(rich_text, "")]
 
-
-
     @staticmethod
     def to_chr(code: str):
         return "".join([chr(int(f"0x{each}", 16)) for each in code.lstrip("FEFF").split(" ")])
@@ -130,48 +147,122 @@ class Text:
         return int(line_height)
 
 
-class Line:
-    def __init__(self, start, end, width, color):
+class Line(BaseContent):
+    def __init__(self, start, end, **options):
         self._start = start
         self._end = end
-        self._width = width
-        self._color = color
-        if isinstance(self._color, list):
-            self._color = " ".join([str(i) for i in self._color])
-        if isinstance(self._start, list):
-            self._start = " ".join([str(i) for i in self._start])
-        if isinstance(self._end, list):
-            self._end = " ".join([str(i) for i in self._end])
+        self._width = 1
+        self._color = COLOR_PALETTE.get('black', [0, 0, 0])
 
-    def to_dict(self):
-        return {
-            "width": self._width, "color": self._color, "start": self._start , "end": self._end
-        }
+        super().__init__(**options)
+
+        if isinstance(self._color, str):
+            self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
+
+        self.code()
+
+    def code(self):
+        color = " ".join([str(i) for i in self._color])
+        start = " ".join([str(i) for i in self._start])
+        end = " ".join([str(i) for i in self._end])
+        self._code = f"{str(self._width)} w\n{color} RG\n{start} m\n{end} l\nS"
+        return self._code
 
 
-class Rect:
-    def __init__(self, x, y, width, height, line_width, color):
+class Rect(BaseContent):
+    def __init__(self, x, y, width, height, **options):
         self._x = x
         self._y = y
-        self._line_width = line_width
         self._width = width
         self._height = height
-        self._color = color
-        if isinstance(self._color, list):
-            self._color = " ".join([str(i) for i in self._color])
+        self._line_width = 1
+        self._color = COLOR_PALETTE.get('black', [0, 0, 0])
 
-    def to_dict(self):
-        return {
-            "x": self._x, "y": self._y,
-            "width": self._width, "height": self._height,
-            "line_width": self._line_width, "color": self._color,
-        }
+        super().__init__(**options)
+
+        if isinstance(self._color, str):
+            self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
+
+        self.code()
+
+    def code(self):
+        color = " ".join([str(i) for i in self._color])
+        self._code = f"{str(self._line_width)} w\n{color} RG\n{self._x} {self._y} {self._width} {self._height} re\nS"
+        return self._code
 
 
-class Resources:
-    def __init__(self, font, font_index):
+class Scatter(BaseContent):
+    def __init__(self, x, y, **options):
+        """
+        Args:
+            x: center of the point
+            y: center of the point
+            **options: type: circle, rectangle
+        """
+        self._x = x
+        self._y = y
+        self._size = 5
+        self._line_width = 1
+        self._fill_color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._stroke_color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._scale_factor = 1
+        self._type = "circle"
+
+        super().__init__(**options)
+
+        if isinstance(self._fill_color, str):
+            self._fill_color = COLOR_PALETTE.get(self._fill_color, [0, 0, 0])
+        if isinstance(self._stroke_color, str):
+            self._stroke_color = COLOR_PALETTE.get(self._stroke_color, [0, 0, 0])
+
+        self.code()
+
+    def code(self):
+        stroke_color = f"{' '.join([str(i) for i in self._stroke_color])} RG"
+        fill_color = f"{' '.join([str(i) for i in self._fill_color])} rg"
+        line_width = f"{self._line_width} w"
+        line = ""
+        if self._type.lower()[:3] == "rec":
+            x = self._x - self._size
+            y = self._y - self._size * self._scale_factor
+            line = f"{x} {y} {self._size * 2} {self._size * self._scale_factor * 2} re b"
+        if self._type.lower()[:3] == "cir":
+            r = 0.55228 * self._size
+            s = (str(self._x - self._size), str(self._y))
+            k1 = (str(self._x - self._size), str(r + self._y))
+            k2 = (str(self._x - r), str(self._y + self._size))
+            e1 = (str(self._x), str(self._y + self._size))
+            k3 = (str(self._x + r), str(self._y + self._size))
+            k4 = (str(self._x + self._size), str(r + self._y))
+            e2 = (str(self._x + self._size), str(self._y))
+            k5 = (str(self._x + self._size), str(self._y - r))
+            k6 = (str(self._x + r), str(self._y - self._size))
+            e3 = (str(self._x), str(self._y - self._size))
+            k7 = (str(self._x - r), str(self._y - self._size))
+            k8 = (str(self._x - self._size), str(self._y - r))
+            e4 = s
+            # line = f"{self._x} {self._y} {self._size} 0 360 arc"
+            line = f"{' '.join(s)} m\n{' '.join(k1)} {' '.join(k2)} {' '.join(e1)} c\n" \
+                   f"{' '.join(k3)} {' '.join(k4)} {' '.join(e2)} c\n" \
+                   f"{' '.join(k5)} {' '.join(k6)} {' '.join(e3)} c\n" \
+                   f"{' '.join(k7)} {' '.join(k8)} {' '.join(e4)} c\nh B"
+        self._code = f"{line_width}\n{stroke_color}\n{fill_color}\n{line}"
+        return self._code
+
+
+class Resources(BaseContent):
+    def __init__(self, font, font_index, **options):
         self._font = font
         self._font_index = font_index
+
+        super().__init__(**options)
+
+        self._code: str = ...
+        self.code()
+
+    def code(self):
+        self._code = "\n".join([f"/{key.capitalize()} <<\n/{val['name']} {val['index']} 0 R\n>>\n" for key, val in self.to_dict().items()])
+        return self._code
 
     def to_dict(self):
         return {
@@ -180,21 +271,30 @@ class Resources:
 
 
 class Obj:
-    def __init__(self, type, **options):
+    def __init__(self, index, type, **options):
         self._pages: str = ""
         self._basefont = ""
         self._name = ""
-        self._index: int = 0
+        self._index: int = index
         self._type: str = type
         self._kids: List[int] = []
         self._parent: Union[int, str] = ""
         self._contents: Union[int, str] = ""
         self._length: Union[int, str] = ""
         self._mediabox: Union[tuple, list] = [0, 0, 612, 792]
-        self._resources: dict = {}
+        self._title: str = ""
+        self._author: str = ""
+        self._producer: str = ""
+        self._creator: str = ""
+        self._subject: str = ""
+        self._keywords: str = ""
+        self._creation_date: str = ""
+        self._mod_date: str = ""
+        self._resources: Resources = ...
         self._text: List[Text] = []
-        self._line: List[dict] = []
-        self._rect: List[dict] = []
+        self._line: List[Line] = []
+        self._rect: List[Rect] = []
+        self._scatter: List[Scatter] = []
         self._subtype = ""
         self._offset: Union[str, int] = ""
         self._number: Union[str, int] = ""
@@ -217,13 +317,24 @@ class Obj:
         return ""
 
     def data(self):
-        return f"{self.index()} 0 obj\n<<\n{self.type()}{self.kids()}" \
+        # attributes = [
+        #     "Type", "Kids", "Parent", "Mediabox", "Contents",
+        #     "Resources", "Length", "Subtype", "Name", "Basefont",
+        #     "Pages", "Title", "Author", "Producer", "Creator",
+        #     "CreateDate", "ModDate", "Subject", "Keywords"
+        #
+        # ]
+        return f"{self.index()} 0 obj\n" \
+               f"<<\n{self.type()}{self.kids()}" \
                f"{self.parent()}{self.mediabox()}{self.contents()}{self.resources()}" \
                f"{self.length()}{self.subtype()}" \
                f"{self.name()}{self.basefont()}{self.pages()}" \
-               f">>\n{self.stream()}" \
+               f"{self.title()}{self.author()}{self.producer()}{self.creator()}{self.creation_date()}{self.mod_date()}{self.subject()}{self.keywords()}" \
+               f">>\n" \
+               f"{self.stream()}" \
                f"endobj\n"
 
+    """ Attributes of objects """
     def pages(self, pages: int = None):
         if self.get_type() != "Catalog":
             return ""
@@ -232,6 +343,9 @@ class Obj:
         if self.get_type() != "Catalog" or not self._pages.isdigit():
             return ""
         return f"/Pages {self._pages} 0 R\n"
+
+    def count(self):
+        return len(self._kids)
 
     def kids(self, kids: Union[List[int], int] = None):
         if self.get_type() != "Pages":
@@ -261,14 +375,14 @@ class Obj:
             return ""
         return f"/Contents {str(self._contents)} 0 R\n"
 
-    def resources(self, resources: dict = None):
+    def resources(self, resources: Resources = None):
         if self.get_type() != "Page":
             return ""
         if resources is not None:
             self._resources = resources
-        if not isinstance(self._resources, dict):
+        if not isinstance(self._resources, Resources):
             return ""
-        resources = "\n".join([f"/{key.capitalize()} <<\n/{val['name']} {val['index']} 0 R\n>>\n" for key, val in self._resources.items()])
+        resources = self._resources.code()
         return f"/Resources <<\n{resources}>>\n"
 
     def length(self, length: int = None):
@@ -282,35 +396,6 @@ class Obj:
         if not str(self._length).isdigit():
             return ""
         return f"/Length {self._length}\n"
-
-    def stream(self):
-        if self.get_type() in ["Page", "Pages", "Font", "Catalog"]:
-            return ""
-        return f"stream\n{self.text()}{self.line()}{self.rect()}endstream\n"
-
-    def text(self, text: Text = None):
-        if text is not None:
-            self._text.append(text)
-        if len(self._text) == 0:
-            return ""
-        content = "\n".join([f"{each._x} {each._y} Td\n{each._rich}" for each in self._text])
-        return f"BT\n{content}\nET\n"
-
-    def line(self, line: dict = None):
-        if line is not None:
-            self._line.append(line)
-        if len(self._line) == 0:
-            return ""
-        line = "\n".join([f"{str(each['width'])} w\n{each['color']} RG\n{each['start']} m\n{each['end']} l\nS" for each in self._line])
-        return f"{line}\n"
-
-    def rect(self, rect: dict = None):
-        if rect is not None:
-            self._rect.append(rect)
-        if len(self._rect) == 0:
-            return ""
-        rect = "\n".join([f"{str(each['line_width'])} w\n{each['color']} RG\n{each['x']} {each['y']} {each['width']} {each['height']} re\nS" for each in self._rect])
-        return f"{rect}\n"
 
     def subtype(self, subtype: str = None):
         if self.get_type() != "Font":
@@ -340,6 +425,89 @@ class Obj:
             self._mediabox = mediabox
         return f"/MediaBox [{' '.join([str(i) for i in self._mediabox])}]\n"
 
+    def title(self, title: str = None):
+        if self.get_type() != "Info":
+            return ""
+        if title is not None:
+            self._title = title
+        return f"/Title ({self._title})\n"
+
+    def author(self, author: str = None):
+        if self.get_type() != "Info":
+            return ""
+        if author is not None:
+            self._author = author
+        return f"/Author ({self._author})\n"
+
+    def producer(self, producer: str = None):
+        if self.get_type() != "Info":
+            return ""
+        if producer is not None:
+            self._producer = producer
+        return f"/Producer ({self._producer})\n"
+
+    def subject(self, subject: str = None):
+        if self.get_type() != "Info":
+            return ""
+        if subject is not None:
+            self._subject = subject
+        return f"/subject ({self._subject})\n"
+
+    def keywords(self, keywords: str = None):
+        if self.get_type() != "Info":
+            return ""
+        if keywords is not None:
+            self._keywords = keywords
+        return f"/keywords ({self._keywords})\n"
+
+    def creator(self, creator: str = None):
+        if self.get_type() != "Info":
+            return ""
+        if creator is not None:
+            self._creator = creator
+        return f"/Creator ({self._creator})\n"
+
+    def creation_date(self, creation_date: str = None):
+        date = str(datetime.now(tz=timezone(offset=timedelta(hours=8))))
+        date = ("D:" + "".join(re.findall(r"(\d*|\+)", date)))[:-2] + "'00'"
+        self._creation_date = date
+        if self.get_type() != "Info":
+            return ""
+        if creation_date is not None:
+            self._creation_date = creation_date
+        return f"/CreationDate ({self._creation_date})\n"
+
+    def mod_date(self, mod_date: str = None):
+        date = str(datetime.now(tz=timezone(offset=timedelta(hours=8))))
+        date = ("D:" + "".join(re.findall(r"(\d*|\+)", date)))[:-2] + "'00'"
+        self._mod_date = date
+        if self.get_type() != "Info":
+            return ""
+        if mod_date is not None:
+            self._mod_date = mod_date
+        return f"/ModDate ({self._mod_date})\n"
+
+    def stream(self):
+        if self.get_type() in ["Page", "Pages", "Font", "Catalog", "Info"]:
+            return ""
+        contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter], key=lambda obj: obj.z_index)
+        code = '\n'.join([obj.code() for obj in contents])
+        stream = f"stream\n{code}\nendstream\n"
+        return stream
+
+    """ Functions """
+    def text(self, text: Text):
+        self._text.append(text)
+
+    def line(self, line: Line):
+        self._line.append(line)
+
+    def rect(self, rect: Rect):
+        self._rect.append(rect)
+
+    def scatter(self, scatter: Scatter):
+        self._scatter.append(scatter)
+
     def index(self):
         return str(self._index)
 
@@ -359,7 +527,7 @@ class Obj:
         return self._contents
 
     def get_font_name(self):
-        return self._resources["font"]["name"]
+        return self._resources.font
 
     def remove_kid(self, index: Union[str, int]):
         kids = [str(i) for i in self._kids]
