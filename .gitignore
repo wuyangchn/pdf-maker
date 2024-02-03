@@ -1,0 +1,6 @@
+build
+pdf_tool.egg-info
+dist
+.idea
+./.idea
+setup.py
