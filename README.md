@@ -7,7 +7,7 @@ A module for creating PDF files manually.
     
     import pdf_maker as pm
     
-    file = pt.NewPDF(filepath="myPDF.pdf")
+    file = pm.NewPDF(filepath="myPDF.pdf")
     
     # write text to the given page
     file.text(page=0, x=300, y=600, line_space=2,
@@ -19,7 +19,7 @@ A module for creating PDF files manually.
 
     import pdf_maker as pm
     
-    file = pt.NewPDF(filepath="myPDF.pdf")
+    file = pm.NewPDF(filepath="myPDF.pdf")
     
     print(file.get_page_indexes())
     
@@ -27,13 +27,13 @@ A module for creating PDF files manually.
     
     file.add_page(size=(500, 500))
     
-    new_page_content = pt.Obj(index="9", type="Stream")
+    new_page_content = pm.Obj(index="9", type="Stream")
     file.add_obj(obj=new_page_content)
     
     page_parent = file.get_obj(type="Pages")[0]
     page_font = file.get_obj(type="Font")[0]
     file.add_obj(index="10", type="Page", contents="9", parent=page_parent.index(), mediabox=[0, 0, 400, 800],
-                 resources=pt.Resources(font=page_font.get_font_name(), font_index=page_font.index()))
+                 resources=pm.Resources(font=page_font.get_font_name(), font_index=page_font.index()))
     
     print(file.get_page_indexes())
     
@@ -52,7 +52,7 @@ A module for creating PDF files manually.
     
     import pdf_maker as pm
     
-    file = pt.NewPDF(filepath="myPDF.pdf")
+    file = pm.NewPDF(filepath="myPDF.pdf")
     
     # write text to the given page
     
