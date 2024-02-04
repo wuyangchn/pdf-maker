@@ -9,9 +9,9 @@
 """
 
 
-import pdf_tool as pt
+import pdf_maker as pm
 
-file = pt.NewPDF(filepath="myPDF.pdf")
+file = pm.NewPDF(filepath="myPDF.pdf")
 
 # write text to the given page
 
