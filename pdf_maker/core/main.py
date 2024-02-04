@@ -10,8 +10,9 @@
 # 
 """
 from .objs import Obj, Resources, Text, Line, Rect, Scatter
+from .canvas import Canvas
 from .crf import Crf
-from ._global import PAGE_SIZE
+from ._global import PAGE_SIZE, ALIGN
 from typing import List, Union
 
 
@@ -57,7 +58,8 @@ class NewPDF:
         self.add_obj(obj=Obj(type="pages", index="2", kids=[]))
         # default obj: one page
         self.add_obj(obj=Obj(type="page", index="3", parent="2", contents="4",
-                             mediabox=[0, 0, *self.page_size], resources=Resources(font="F1", font_index="5")))
+                             mediabox=[0, 0, *self.page_size],
+                             resources=Resources(font="F1", font_index="5")))
         # default obj: stream
         self.add_obj(obj=Obj(type="", index="4", text=[]))
         # default obj: font
@@ -169,7 +171,7 @@ class NewPDF:
 
         """
         page = [obj for obj in self._objs if obj.get_type() == "Page"][index]
-        page.set_page_size(width=width, height=height)
+        page.page_size((width, height))
 
     def text(self, page: int, x: int, y: int, text: str, size: int = 12, base: int = 1, **options):
         page = self.get_page(index=page, base=base)
@@ -265,4 +267,38 @@ class NewPDF:
         pages = self.get_obj(type="Pages")[0]
         page = pages._kids.pop(from_index - base)
         pages._kids.insert(to_index - base, page)
+
+    def canvas(self, page: int, margin_left: Union[int, float], margin_top: Union[int, float], canvas: Canvas, base: int = 1):
+        """
+        Args:
+            page:
+            x: distance from top of the page
+            y: distance from left of the page
+            canvas:
+            base:
+            position:
+
+        Returns:
+
+        """
+        page = self.get_page(index=page, base=base)
+        canvas.left_bottom((margin_left, page.page_size()[1] - margin_top - canvas.height()))
+        font_name = page.get_font_name()
+        font = self.get_obj(type="Font")[0].get_basefont()
+        contents_page = self.get_obj(index=page.get_contents_index())
+        for comp in canvas.components():
+            print(comp.name())
+            if isinstance(comp, Text):
+                comp._font_name = font_name
+                comp._font = font
+                contents_page.text(comp)
+            if isinstance(comp, Rect):
+                contents_page.rect(comp)
+            if isinstance(comp, Scatter):
+                contents_page.scatter(comp)
+            if isinstance(comp, Line):
+                contents_page.line(comp)
+        pass
+
+
 

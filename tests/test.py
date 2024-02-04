@@ -8,24 +8,31 @@
 # 
 """
 
-
+import numpy as np
 import pdf_maker as pm
 
 file = pm.NewPDF(filepath="myPDF.pdf")
 
-# write text to the given page
+cv = pm.Canvas(width=250, height=200, scale=(0, 100, 0, 200), show_frame=True)
 
-# draw lines to the given page
-file.line(page=0, start=[100, 100], end=[300, 300], width=1, color="black")
-file.line(page=0, start=[500, 100], end=[300, 300], width=5, color="red")
+cv.text(name="TEXT01", x=50, y=50, text="hello", size=12, font="arial", coordinate="scale")
 
-# draw a rectangle to the given page
-file.rect(page=0, left_bottom=[100, 100], width=400, height=400, line_width=1, color="blue")
+xs = np.random.randint(low=5, high=85, size=100)
+ys = np.random.randint(low=5, high=200, size=100)
+for x, y in zip(xs, ys):
+    cv.scatter(name=f"SCATTER_{x}_{y}", x=x, y=y, size=2, coordinate="scale", fill_color="red" if y <= 100 else "grey")
 
-# draw scatters
-for i in range(50):
-    file.scatter(page=0, x=200 + i * 10, y=400 + i * 2, size=4)
-    file.scatter(page=0, x=500 - i * 10, y=400 + i * 2, size=4, type="rectangle")
+
+for x in range(0, 100):
+    cv.line(name=f"LINE_X_{x}", start=[x, 0], end=[x, 200], width=0.5, color="grey")
+
+for y in range(0, 200):
+    cv.line(name=f"LINE_Y_{y}", start=[0, y], end=[100, y], width=0.5, color="grey")
+
+file.canvas(margin_left=150, margin_top=100, page=1, canvas=cv)
 
 # save pdf
 file.save()
+
+
+

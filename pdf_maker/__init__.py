@@ -9,4 +9,4 @@
 """
 
 from .core.main import NewPDF, Obj, Text, Resources, Rect, Scatter, Line
-
+from .core.canvas import Canvas

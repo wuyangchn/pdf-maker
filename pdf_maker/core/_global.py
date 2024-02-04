@@ -9,10 +9,15 @@
 #
 # 
 """
+import os
+from typing import List
+
+
+SOURCE_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources")
 
 
 FONT_LIB = {
-    "arial": r"D:\PythonProjects\pdf-tool\pdf_tool\resources\font\arial.ttf",
+    "arial": os.path.join(SOURCE_ROOT, "font\\arial.ttf"),
 }
 
 
@@ -40,3 +45,9 @@ PAGE_SIZE: dict = {
     "letter": (612, 792),
     "legal": (612, 1008),
 }
+
+ALIGN: List[str] = [
+    "left_top", "middle_top", "right_top",
+    "left_center", "middle_center", "right_center",
+    "left_bottom", "middle_bottom", "right_bottom",
+]
