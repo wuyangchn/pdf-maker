@@ -1,4 +1,4 @@
-# PDF-Tool
+# PDF-Maker
 A module for creating PDF files manually.
 
 ## Example usage:

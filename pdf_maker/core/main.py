@@ -33,9 +33,9 @@ class NewPDF:
         self._body = ""
 
         self.title = "NewPDF"
-        self.author = ""
-        self.producer = "PDF-Tool"
-        self.creator = "Manually"
+        self.author = "PDF-Maker"
+        self.producer = "https://pypi.org/project/pdf-maker/"
+        self.creator = "PDF-Maker"
         self.page_size = (595, 842)
         self.filepath = ""
 
