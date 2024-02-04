@@ -1,5 +1,5 @@
 build
-pdf_tool.egg-info
+pdf_maker.egg-info
 dist
 .idea
 ./.idea
