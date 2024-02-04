@@ -144,7 +144,7 @@ class NewPDF:
         """
         if filepath == "":
             filepath = self.filepath
-
+        print(filepath)
         with open(filepath, 'wb') as f:
             f.write(self.get_byte())
 

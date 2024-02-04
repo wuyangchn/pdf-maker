@@ -11,6 +11,7 @@
 import numpy as np
 import pdf_maker as pm
 
+
 file = pm.NewPDF(filepath="myPDF.pdf")
 
 cv = pm.Canvas(width=250, height=200, scale=(0, 100, 0, 200), show_frame=True)
