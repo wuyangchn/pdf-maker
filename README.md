@@ -5,7 +5,7 @@ A module for creating PDF files manually.
 
 ### Create a simple PDF with Hello World!
     
-    import pdf_tool as pt
+    import pdf_maker as pm
     
     file = pt.NewPDF(filepath="myPDF.pdf")
     
@@ -17,7 +17,7 @@ A module for creating PDF files manually.
     
 ### Add pages
 
-    import pdf_tool as pt
+    import pdf_maker as pm
     
     file = pt.NewPDF(filepath="myPDF.pdf")
     
@@ -50,7 +50,7 @@ A module for creating PDF files manually.
 
 ### Draw scatters and lines
     
-    import pdf_tool as pt
+    import pdf_maker as pm
     
     file = pt.NewPDF(filepath="myPDF.pdf")
     
