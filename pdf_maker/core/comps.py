@@ -15,7 +15,7 @@ from ._global import FONT_LIB, COLOR_PALETTE
 
 
 class BaseContent:
-    def __init__(self, name, z_index: int = 0, **options):
+    def __init__(self, name: str = "", z_index: int = 0, **options):
         self._name = name
         self._z_index = z_index
         for key, value in options.items():
