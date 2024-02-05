@@ -10,9 +10,9 @@
 # 
 """
 from .objs import Obj, Resources, Text, Line, Rect, Scatter
-from .canvas import Canvas
+from pdf_maker.canvas import PlotArea, Canvas
 from .crf import Crf
-from ._global import PAGE_SIZE, ALIGN
+from pdf_maker.constants._global import PAGE_SIZE
 from typing import List, Union
 
 
@@ -268,15 +268,15 @@ class NewPDF:
         page = pages._kids.pop(from_index - base)
         pages._kids.insert(to_index - base, page)
 
-    def canvas(self, page: int, margin_left: Union[int, float], margin_top: Union[int, float], canvas: Canvas, base: int = 1):
+    def canvas(self, page: int, margin_left: Union[int, float], margin_top: Union[int, float],
+               canvas: Canvas, base: int = 1):
         """
         Args:
+            margin_top:
+            margin_left:
             page:
-            x: distance from top of the page
-            y: distance from left of the page
             canvas:
-            base:
-            position:
+            base: from which indexing page number starts
 
         Returns:
 

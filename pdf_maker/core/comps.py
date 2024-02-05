@@ -11,7 +11,7 @@
 """
 import re
 from fontTools.ttLib import TTFont
-from ._global import FONT_LIB, COLOR_PALETTE
+from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE
 
 
 class BaseContent:

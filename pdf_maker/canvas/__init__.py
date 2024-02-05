@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 """
 # ==========================================
 # Copyright 2024 Yang 
@@ -8,5 +10,5 @@
 # 
 """
 
-from .core.main import NewPDF, Obj, Text, Resources, Rect, Scatter, Line
-from pdf_maker.canvas import Canvas
+from .plotarea import PlotArea
+from .canvas import Canvas
