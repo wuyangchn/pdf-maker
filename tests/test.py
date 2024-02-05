@@ -39,7 +39,7 @@ file.canvas(margin_left=1, margin_top=1, page=1, canvas=cv, unit="cm")
 # save pdf
 file.save()
 
-print(file.content_str)
+# print(file.content_str)
 
 # print(file.get_obj(type="FontDescriptor")[0].data())
 

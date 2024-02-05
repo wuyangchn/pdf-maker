@@ -20,6 +20,7 @@ FONT_LIB = {
     "arial": os.path.join(SOURCE_ROOT, "font\\arial.ttf"),
     "helvetica": os.path.join(SOURCE_ROOT, "font\\helvetica.ttf"),
     "helvetica-normal": os.path.join(SOURCE_ROOT, "font\\helvetica-normal.ttf"),
+    "AdobeSongStd-Light": os.path.join(SOURCE_ROOT, "font\\AdobeSongStd-Light.otf"),
 }
 
 

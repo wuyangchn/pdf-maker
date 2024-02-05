@@ -9,4 +9,5 @@
 """
 
 from .core.main import NewPDF, Obj, Text, Resources, Rect, Scatter, Line
-from pdf_maker.canvas import Canvas
+from .constants._global import FONT_LIB
+from .canvas import Canvas

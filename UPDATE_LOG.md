@@ -8,3 +8,4 @@
 
 # v0.0.3
 * to do: completing canvas
+* add other attributions such as FontDescriptor in the Font object.
