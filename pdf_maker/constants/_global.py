@@ -10,7 +10,7 @@
 # 
 """
 import os
-from typing import List
+from typing import List, Mapping, Union
 
 
 SOURCE_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources")
@@ -18,6 +18,8 @@ SOURCE_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resource
 
 FONT_LIB = {
     "arial": os.path.join(SOURCE_ROOT, "font\\arial.ttf"),
+    "helvetica": os.path.join(SOURCE_ROOT, "font\\helvetica.ttf"),
+    "helvetica-normal": os.path.join(SOURCE_ROOT, "font\\helvetica-normal.ttf"),
 }
 
 
@@ -51,3 +53,20 @@ ALIGN: List[str] = [
     "left_center", "middle_center", "right_center",
     "left_bottom", "middle_bottom", "right_bottom",
 ]
+
+UNIT: Mapping[str, Union[int, float]] = {
+    "cm": 0.393701, "inch": 1.0, "mm": 0.0393701, "point": 1, "pt": 1
+}
+
+LINE_STYLE: Mapping[str, Union[int, float]] = {
+    "solid": ...,
+    "dotted": (1, 1),
+    "dashed": (5, 5),
+    "dashdot": (5, 2, 1, 2),
+    "densely_dashed": (5, 1),
+    "loosely_dashed": (5, 10),
+    "densely_dotted": (1, 10),
+    "loosely_dotted": (1, 1),
+}
+
+WIND = ["WIND_EVEN_ODD", "WIND_NON_ZERO"]

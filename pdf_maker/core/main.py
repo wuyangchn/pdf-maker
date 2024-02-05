@@ -12,7 +12,7 @@
 from .objs import Obj, Resources, Text, Line, Rect, Scatter
 from pdf_maker.canvas import PlotArea, Canvas
 from .crf import Crf
-from pdf_maker.constants._global import PAGE_SIZE
+from pdf_maker.constants._global import PAGE_SIZE, FONT_LIB
 from typing import List, Union
 
 
@@ -30,7 +30,7 @@ class NewPDF:
         self._objs: List[Obj] = []
         self._pages = []
         self._crf: Crf = ...
-        self._header = "%PDF-1.7\n"
+        self._header = "%PDF-1.4\n%âãÏÓ\n"
         self._body = ""
 
         self.title = "NewPDF"
@@ -52,21 +52,27 @@ class NewPDF:
         if isinstance(self.page_size, str):
             self.page_size = PAGE_SIZE.get(self.page_size.lower(), (595, 842))
 
+        font = "arial"
         # default obj: catalog
-        self.add_obj(obj=Obj(type="catalog", index="1", pages="2"))
+        self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages
-        self.add_obj(obj=Obj(type="pages", index="2", kids=[]))
+        self.add_obj(obj=Obj(type="Pages", index="2", kids=[]))
         # default obj: one page
-        self.add_obj(obj=Obj(type="page", index="3", parent="2", contents="4",
+        self.add_obj(obj=Obj(type="Page", index="3", parent="2", contents="4",
                              mediabox=[0, 0, *self.page_size],
-                             resources=Resources(font="F1", font_index="5")))
+                             resources=Resources(font="F1", font_index="5", procset_index="9")))
         # default obj: stream
-        self.add_obj(obj=Obj(type="", index="4", text=[]))
+        self.add_obj(obj=Obj(type="Stream", index="4", text=[]))
         # default obj: font
-        self.add_obj(obj=Obj(type="font", index="5", subtype="Type1", name="F1", basefont="arial"))
+        self.add_obj(obj=Obj(type="Font", index="5", subtype="Type1", name="F1", basefont=font,
+                             font_descriptor="8"))
         # default obj: info
         self.add_obj(obj=Obj(type="Info", index="6", title=self.title, author="Yang",
                              producer=self.producer, creator=self.creator))
+        # fontDescriptor
+        self.add_obj(obj=Obj(type="FontDescriptor", index="8", flags="4", font_name=font))
+        # Procset
+        self.add_obj(obj=Obj(type="ProcSet", index="9", procset="[/PDF /Text]"))
 
     def del_obj(self, index: int):
         found = False
@@ -112,7 +118,7 @@ class NewPDF:
 
     def get_obj(self, type: str = None, index: Union[str, int] = None):
         if type is not None:
-            return [obj for obj in self._objs if obj.get_type() == type.capitalize()]
+            return [obj for obj in self._objs if obj.get_type() == type]
         if index is not None:
             return [obj for obj in self._objs if obj.index() == str(index)][0]
         raise ValueError("Object not found.")
@@ -268,10 +274,11 @@ class NewPDF:
         page = pages._kids.pop(from_index - base)
         pages._kids.insert(to_index - base, page)
 
-    def canvas(self, page: int, margin_left: Union[int, float], margin_top: Union[int, float],
+    def canvas(self, page: int, margin_left: Union[int, float], margin_top: Union[int, float], unit: str,
                canvas: Canvas, base: int = 1):
         """
         Args:
+            unit:
             margin_top:
             margin_left:
             page:
@@ -282,12 +289,13 @@ class NewPDF:
 
         """
         page = self.get_page(index=page, base=base)
-        canvas.left_bottom((margin_left, page.page_size()[1] - margin_top - canvas.height()))
+        left, top = canvas.unit_to_points(margin_left, margin_top, unit=unit)
+        canvas.left_bottom((left, page.page_size()[1] - top - canvas.height()))
         font_name = page.get_font_name()
         font = self.get_obj(type="Font")[0].get_basefont()
         contents_page = self.get_obj(index=page.get_contents_index())
-        for comp in canvas.components():
-            print(comp.name())
+        for comp in canvas.all_components():
+            # print(comp.name())
             if isinstance(comp, Text):
                 comp._font_name = font_name
                 comp._font = font

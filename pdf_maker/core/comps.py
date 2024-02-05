@@ -11,7 +11,8 @@
 """
 import re
 from fontTools.ttLib import TTFont
-from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE
+from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
+from typing import Tuple, Union
 
 
 class BaseContent:
@@ -152,10 +153,11 @@ class Text(BaseContent):
 
 
 class Line(BaseContent):
-    def __init__(self, start, end, **options):
+    def __init__(self, start, end, line_style: str = "solid", **options):
         self._start = start
         self._end = end
         self._width = 1
+        self._line_style = line_style
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
 
         super().__init__(**options)
@@ -165,12 +167,55 @@ class Line(BaseContent):
 
         self.code()
 
-    def code(self):
-        color = " ".join([str(i) for i in self._color])
-        start = " ".join([str(i) for i in self._start])
-        end = " ".join([str(i) for i in self._end])
-        self._code = f"{str(self._width)} w\n{color} RG\n{start} m\n{end} l\nS"
-        return self._code
+    def code(self, start=None, end=None, lt: str = None):
+        if start is None or end is None:
+            start, end = self._start, self._end
+        if lt is None:
+            lt = self._line_style
+        distance = ((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2) ** .5
+        if distance == 0:
+            return ""
+        if lt == "solid":
+            color = " ".join([str(i) for i in self._color])
+            start = " ".join([str(i) for i in start])
+            end = " ".join([str(i) for i in end])
+            code = f"{str(self._width)} w\n{color} RG\n{start} m\n{end} l\nS"
+        elif lt in ["dashed", "dotted", "densely_dotted", "densely_dashed", "loosely_dashed", "loosely_dotted"]:
+            dash_length = LINE_STYLE[lt][0]
+            blank_length = LINE_STYLE[lt][1]
+            step_x = (dash_length + blank_length) / distance * (end[0] - start[0])
+            step_y = (dash_length + blank_length) / distance * (end[1] - start[1])
+            add_x = dash_length / distance * (end[0] - start[0])
+            add_y = dash_length / distance * (end[1] - start[1])
+            code = "\n".join([self.code(
+                start=[start[0] + i * step_x, start[1] + i * step_y],
+                end=[start[0] + i * step_x + add_x, start[1] + i * step_y + add_y],
+                lt="solid") for i in range(int(distance // (dash_length + blank_length) + 1))]
+            )
+        elif lt == "dashdot":
+            step_x = sum(LINE_STYLE[lt]) / distance * (end[0] - start[0])
+            step_y = sum(LINE_STYLE[lt]) / distance * (end[1] - start[1])
+            add_x_1 = LINE_STYLE[lt][0] / distance * (end[0] - start[0])
+            add_y_1 = LINE_STYLE[lt][0] / distance * (end[1] - start[1])
+            add_x_2 = sum(LINE_STYLE[lt][:2]) / distance * (end[0] - start[0])
+            add_y_2 = sum(LINE_STYLE[lt][:2]) / distance * (end[1] - start[1])
+            add_x_3 = sum(LINE_STYLE[lt][:3]) / distance * (end[0] - start[0])
+            add_y_3 = sum(LINE_STYLE[lt][:3]) / distance * (end[1] - start[1])
+            code = "\n".join(
+                ["\n".join([
+                    self.code(
+                        start=[start[0] + i * step_x, start[1] + i * step_y],
+                        end=[start[0] + i * step_x + add_x_1, start[1] + i * step_y + add_y_1],
+                        lt="solid"),
+                    self.code(
+                        start=[start[0] + i * step_x + add_x_2, start[1] + i * step_y + add_y_2],
+                        end=[start[0] + i * step_x + add_x_3, start[1] + i * step_y + add_y_3],
+                        lt="solid"),
+                ]) for i in range(int(distance // sum(LINE_STYLE[lt]) + 1))]
+            )
+        else:
+            raise ValueError(f"line style must be one of f{', '.join(LINE_STYLE.keys())}, but got {lt} instead.")
+        return code
 
 
 class Rect(BaseContent):
@@ -181,6 +226,11 @@ class Rect(BaseContent):
         self._height = height
         self._line_width = 1
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._fill: bool = False
+        self._wind: bool = False
+        self._wind_color = COLOR_PALETTE.get('white', [1, 1, 1])
+        self._wind_style = "WIND_NON_ZERO"
+        self._wind_inside_rect: Tuple[Union[float, int], ...] = ...
 
         super().__init__(**options)
 
@@ -190,8 +240,12 @@ class Rect(BaseContent):
         self.code()
 
     def code(self):
-        color = " ".join([str(i) for i in self._color])
-        self._code = f"{str(self._line_width)} w\n{color} RG\n{self._x} {self._y} {self._width} {self._height} re\nS"
+        wind = f"\n{' '.join([str(i) for i in self._wind_inside_rect])} re " \
+               f"f{'*' if self._wind_style == 'WIND_EVEN_ODD' else ''}" if self._wind else ""
+        self._code = f"{str(self._line_width)} w\n" \
+                     f"{' '.join([str(i) for i in self._color])} RG\n" \
+                     f"{(' '.join([str(i) for i in self._wind_color]) + ' rg') if self._wind else ''}\n" \
+                     f"{self._x} {self._y} {self._width} {self._height} re {wind}\nS"
         return self._code
 
 

@@ -10,7 +10,7 @@
 # 
 """
 from typing import List, Tuple, Union
-from .area import Area
+from .area import Area, Text, Line, Scatter, Rect, COLOR_PALETTE
 
 
 class PlotArea(Area):
