@@ -14,6 +14,7 @@ import re
 from datetime import datetime, timezone, timedelta
 from .comps import BaseContent, Text, Scatter, Line, Rect, FONT_LIB
 from fontTools.ttLib import TTFont
+from xml.etree import ElementTree
 
 
 class Resources:
@@ -83,7 +84,7 @@ class Obj:
         self._stemv = ""
         self._missing_width = ""
         self._font_descriptor = ""
-        self._widths = ""
+        self._widths = []
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -92,20 +93,30 @@ class Obj:
                     setattr(self, name, value)
 
         if self.get_type() == "FontDescriptor":
-            print(f"{self._font_name = }")
-            self._OPEN_FONT = TTFont(FONT_LIB.get(str(self._font_name).lower()))
-            print(self._OPEN_FONT['OS/2'].__dict__)
-            print(self._OPEN_FONT['head'].__dict__)
-            print(self._OPEN_FONT['hhea'].__dict__)
-            print(self._OPEN_FONT['maxp'].__dict__)
-            print(self._OPEN_FONT['cmap'].__dict__)
-            print(self._OPEN_FONT['name'].__dict__)
-            print(self._OPEN_FONT['post'].__dict__)
-            print(self._OPEN_FONT['hmtx'].__dict__)
-            print(self._OPEN_FONT['hmtx'].__dict__['metrics'].keys())
-            a = list(self._OPEN_FONT['hmtx'].__dict__['metrics'].values())
-            print(len(a))
-            print(a)
+            tree = ElementTree.parse(FONT_LIB.get(str(self._font_name).lower()))
+            root = tree.getroot()
+            head_obj = root.find('head')
+            OS_2_obj = root.find('OS_2')
+            post_obj = root.find('post')
+            self._flags = head_obj.find("flags").attrib['value']
+            xMin = head_obj.find("xMin").attrib['value']
+            yMin = head_obj.find("yMin").attrib['value']
+            xMax = head_obj.find("xMax").attrib['value']
+            yMax = head_obj.find("yMax").attrib['value']
+            self._font_bbox = [xMin, yMin, xMax, yMax]
+            self._italic_angle = post_obj.find("italicAngle").attrib['value']
+            self._ascent = OS_2_obj.find("sTypoAscender").attrib['value']
+            self._descent = OS_2_obj.find("sTypoDescender").attrib['value']
+            self._cap_height = OS_2_obj.find("sCapHeight").attrib['value']
+            self._missing_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
+
+        if self.get_type() == "Font":
+            tree = ElementTree.parse(FONT_LIB.get(str(self._basefont).lower()))
+            root = tree.getroot()
+            mtx_objs = root.find('hmtx').findall('mtx')
+            for mtx in mtx_objs:
+                self._widths.append(mtx.attrib.get('width', 0))
+
 
     def get_type(self):
         return self._type
@@ -237,12 +248,22 @@ class Obj:
             self._font_descriptor = font_descriptor
         return f"/FontDescriptor {self._font_descriptor} 0 R\n"
 
-    def widths(self, widths = None):
+    def widths(self, widths=None):
         if self.get_type() != "Font":
             return ""
         if widths is not None:
             self._widths = widths
-        return f"/Widths {self._widths}\n"
+        else:
+            try:
+                widths = ""
+                for index, item in enumerate(self._widths):
+                    if (index + 1) % 10 == 0:
+                        widths = widths + item + "\n"
+                    else:
+                        widths = widths + item + " "
+            except (KeyError, AttributeError):
+                return ""
+        return f"/Widths [{widths}]\n"
 
     def mediabox(self, mediabox: Union[tuple, list] = None):
         if self.get_type() != "Page":
@@ -323,11 +344,6 @@ class Obj:
     def font_bbox(self, font_bbox: List[Union[int, str]] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            head_table = self._OPEN_FONT['head']
-            self._font_bbox = [head_table.xMin, head_table.yMin, head_table.xMax, head_table.yMax]
-        except AttributeError:
-            self._font_bbox = [0, -205, 602, 770]
         if font_bbox is not None:
             self._font_bbox = font_bbox
         return f"/FontBBox [{' '.join([str(i) for i in self._font_bbox])}]\n"
@@ -335,10 +351,6 @@ class Obj:
     def flags(self, flags: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            self._flags = self._OPEN_FONT['head'].flags
-        except AttributeError:
-            self._flags = 4
         if flags is not None:
             self._flags = flags
         return f"/Flags {self._flags}\n"
@@ -346,10 +358,6 @@ class Obj:
     def ascent(self, ascent: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            self._ascent = self._OPEN_FONT['OS/2'].sTypoAscender
-        except AttributeError:
-            self._ascent = 770
         if ascent is not None:
             self._ascent = ascent
         return f"/Ascent {self._ascent}\n"
@@ -357,10 +365,6 @@ class Obj:
     def descent(self, descent: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            self._descent = self._OPEN_FONT['OS/2'].sTypoDescender
-        except AttributeError:
-            self._descent = -205
         if descent is not None:
             self._descent = descent
         return f"/Descent {self._descent}\n"
@@ -368,10 +372,6 @@ class Obj:
     def cap_height(self, cap_height: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            self._cap_height = self._OPEN_FONT['OS/2'].sCapHeight
-        except AttributeError:
-            self._cap_height = 770
         if cap_height is not None:
             self._cap_height = cap_height
         return f"/CapHeight {self._cap_height}\n"
@@ -379,10 +379,6 @@ class Obj:
     def italicangle(self, italicangle: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            self._italic_angle = self._OPEN_FONT['post'].italicAngle
-        except AttributeError:
-            self._italic_angle = 0
         if italicangle is not None:
             self._italic_angle = italicangle
         return f"/ItalicAngle {self._italic_angle}\n"
@@ -398,10 +394,6 @@ class Obj:
     def missingwidth(self, missing_width: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        try:
-            self._missing_width = self._OPEN_FONT['OS/2'].xAvgCharWidth
-        except AttributeError:
-            self._missing_width = 1000
         if missing_width is not None:
             self._missing_width = missing_width
         return f"/MissingWidth {self._missing_width}\n"

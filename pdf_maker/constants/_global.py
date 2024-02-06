@@ -17,9 +17,12 @@ SOURCE_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resource
 
 
 FONT_LIB = {
-    "arial": os.path.join(SOURCE_ROOT, "font\\arial.ttf"),
+    "arial": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
+    "Arial": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
     "helvetica": os.path.join(SOURCE_ROOT, "font\\helvetica.ttf"),
+    "Helvetica": os.path.join(SOURCE_ROOT, "font\\helvetica.ttf"),
     "helvetica-normal": os.path.join(SOURCE_ROOT, "font\\helvetica-normal.ttf"),
+    "Helvetica-Normal": os.path.join(SOURCE_ROOT, "font\\helvetica-normal.ttf"),
     "AdobeSongStd-Light": os.path.join(SOURCE_ROOT, "font\\AdobeSongStd-Light.otf"),
 }
 

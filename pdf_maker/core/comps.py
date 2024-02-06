@@ -13,6 +13,7 @@ import re
 from fontTools.ttLib import TTFont
 from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
 from typing import Tuple, Union
+from xml.etree import ElementTree
 
 
 class BaseContent:
@@ -143,12 +144,21 @@ class Text(BaseContent):
 
     @staticmethod
     def get_text_height(text: str, font: str, size: int):
-        font = TTFont(FONT_LIB.get(str(font).lower()))
-        pixels_per_em = font['head'].unitsPerEm
-        ascender = font['OS/2'].sTypoAscender
-        descender = font['OS/2'].sTypoDescender
-        line_gap = font['OS/2'].sTypoLineGap
-        line_height = (ascender + descender + line_gap) / pixels_per_em * size
+        # font = TTFont(FONT_LIB.get(str(font).lower()))
+        # pixels_per_em = font['head'].unitsPerEm
+        # ascender = font['OS/2'].sTypoAscender
+        # descender = font['OS/2'].sTypoDescender
+        # line_gap = font['OS/2'].sTypoLineGap
+
+        tree = ElementTree.parse(FONT_LIB.get(font.lower()))
+        root = tree.getroot()
+        head_obj = root.find('head')
+        OS_2_obj = root.find('OS_2')
+        pixels_per_em = head_obj.find("unitsPerEm").attrib['value']
+        ascender = OS_2_obj.find("sTypoAscender").attrib['value']
+        descender = OS_2_obj.find("sTypoDescender").attrib['value']
+        line_gap = OS_2_obj.find("sTypoLineGap").attrib['value']
+        line_height = (float(ascender) + float(descender) + float(line_gap)) / float(pixels_per_em) * size
         return int(line_height)
 
 

@@ -52,7 +52,7 @@ class NewPDF:
         if isinstance(self.page_size, str):
             self.page_size = PAGE_SIZE.get(self.page_size.lower(), (595, 842))
 
-        font = "helvetica"
+        font = "Arial"
         # default obj: catalog
         self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages

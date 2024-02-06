@@ -20,7 +20,7 @@ cv = pm.Canvas(width=15, height=12, unit="cm", show_frame=True, frame_line_width
 
 pt = cv.plot_area()
 
-pt.text(name="TEXT01", x=50, y=50, text="hello", size=12, font="helvetica", coordinate="scale")
+pt.text(name="TEXT01", x=50, y=50, text="hello", size=12, font="Arial", coordinate="scale")
 
 xs = np.random.randint(low=0, high=200, size=100)
 ys = np.random.randint(low=0, high=200, size=100)
@@ -39,9 +39,7 @@ file.canvas(margin_left=1, margin_top=1, page=1, canvas=cv, unit="cm")
 # save pdf
 file.save()
 
-# print(file.content_str)
-
-# print(file.get_obj(type="FontDescriptor")[0].data())
+print(file.content_str)
 
 # open ararpy files
 file_path = r'D:\PythonProjects\pdf-maker\venv\Lib\site-packages\ararpy\examples\22WHA0433.arr'
