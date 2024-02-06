@@ -10,18 +10,18 @@
 # 
 """
 from typing import List, Tuple, Union
-from pdf_maker.constants._global import COLOR_PALETTE, UNIT
+from pdf_maker.constants._global import COLOR_PALETTE, UNIT, KEYNAMES
 from pdf_maker.core.comps import Text, Line, Scatter, Rect
 
 
 class Area:
     def __init__(self, width, height, show_frame: bool = False, margin_left: int = 0,
                  margin_bottom: int = 0, unit: str = "point", ppi: int = 72,
-                 background_color: List[int] = COLOR_PALETTE["white"], frame_line_width: int = 1):
+                 background_color: List[int] = COLOR_PALETTE["white"], frame_line_width: int = 1, **options):
         self._ppi = ppi
         self._unit = unit
         self._width, self._height = self.unit_to_points(width, height, unit=unit)
-        self._left_bottom = self.unit_to_points(margin_left, margin_bottom, unit=unit)
+        self._margin_left, self._margin_bottom = self.unit_to_points(margin_left, margin_bottom, unit=unit)
         self._frame_line_width = frame_line_width
 
         self._background_color: List[int] = background_color
@@ -32,38 +32,38 @@ class Area:
         if show_frame:
             self.show_frame()
 
-    def ppi(self):
+    def ppi(self, ppi: int = None):
+        if ppi is not None:
+            self._ppi = ppi
         return self._ppi
 
     def left_bottom(self, lb: Tuple[Union[int, float], ...] = None):
         """ note that positions of components will be changed correspondingly """
         if lb is not None:
-            diff = [item - self._left_bottom[index] for index, item in enumerate(lb[:2])]
-            for comp in self.components():
+            diff = [lb[0] - self._margin_left, lb[1] - self._margin_bottom]
+            for comp in self._components:
                 self.move_comp(comp, diff=diff)
-            self._left_bottom = lb
-
-        return self._left_bottom
+            self._margin_left, self._margin_bottom = lb
+        return self._margin_left, self._margin_bottom
 
     def unit_to_points(self, x, y, unit: str = "pt"):
         if unit not in UNIT.keys():
             raise ValueError(f"unit mush be one of {', '.join(UNIT.keys())}, "
                              f"but got a {unit} instead.")
         if unit.lower() not in ["point", "pt"]:
-            x = x * UNIT[unit] * self.ppi()
-            y = y * UNIT[unit] * self.ppi()
+            x = x * UNIT[unit] * self._ppi
+            y = y * UNIT[unit] * self._ppi
         return x, y
 
     def move_comp(self, comp: Union[Text, Rect, Scatter, Line], diff: List[Union[int, float]]):
         if isinstance(comp, (Text, Scatter)):
-            comp._x, comp._y = [comp._x + diff[0], comp._y + diff[1]]
+            comp._x, comp._y = comp._x + diff[0], comp._y + diff[1]
         if isinstance(comp, Rect):
-            comp._x, comp._y = [comp._x + diff[0], comp._y + diff[1]]
-            if isinstance(comp._wind_inside_rect, tuple) and len(comp._wind_inside_rect) == 4:
-                comp._wind_inside_rect = (
-                    comp._wind_inside_rect[0] + diff[0], comp._wind_inside_rect[1] + diff[1],
-                    *comp._wind_inside_rect[2:]
-                )
+            comp._x, comp._y = comp._x + diff[0], comp._y + diff[1]
+            if isinstance(comp._wind_inside_rects, list) and len(comp._wind_inside_rects) > 0:
+                comp._wind_inside_rects = [(
+                    rect[0] + diff[0], rect[1] + diff[1], *rect[2:]
+                ) for rect in comp._wind_inside_rects]
         if isinstance(comp, Line):
             comp._start = [comp._start[0] + diff[0], comp._start[1] + diff[1]]
             comp._end = [comp._end[0] + diff[0], comp._end[1] + diff[1]]
@@ -93,13 +93,13 @@ class Area:
                             f"or Rect, got a {type(comp)} instead.")
 
     def has_comp(self, comp_name):
-        for comp in self.components():
+        for comp in self._components:
             if comp.name() == comp_name:
                 return True
         return False
 
     def get_comp(self, comp_name):
-        for comp in self.components():
+        for comp in self._components:
             if comp.name() == comp_name:
                 return comp
 
@@ -108,7 +108,7 @@ class Area:
             self.remove_frame()
         self._show_frame = True
         if not self.has_comp("CanvasFrame"):
-            rect = Rect(*self._left_bottom, width=self._width, height=self._height,
+            rect = Rect(x=self._margin_left, y=self._margin_bottom, width=self._width, height=self._height,
                         name="CanvasFrame", line_width=self._frame_line_width)
             self._components.append(rect)
 
@@ -116,7 +116,7 @@ class Area:
         self._show_frame = False
         self.del_component(comp=self.get_comp(comp_name="CanvasFrame"))
 
-    def text(self, x: int, y: int, text: str, size: int = 12, font: str = "arial", **options):
+    def text(self, x: int, y: int, text: str, size: int = 12, font: str = "Arial", **options):
         text = Text(font_name="", size=size, x=x, y=y, text=text, font=font, **options)
         self._components.append(text)
         return text

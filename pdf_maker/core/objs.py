@@ -13,7 +13,6 @@ from typing import List, Union, Tuple
 import re
 from datetime import datetime, timezone, timedelta
 from .comps import BaseContent, Text, Scatter, Line, Rect, FONT_LIB
-from fontTools.ttLib import TTFont
 from xml.etree import ElementTree
 
 

@@ -12,7 +12,7 @@
 import re
 from fontTools.ttLib import TTFont
 from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 from xml.etree import ElementTree
 
 
@@ -240,7 +240,7 @@ class Rect(BaseContent):
         self._wind: bool = False
         self._wind_color = COLOR_PALETTE.get('white', [1, 1, 1])
         self._wind_style = "WIND_NON_ZERO"
-        self._wind_inside_rect: Tuple[Union[float, int], ...] = ...
+        self._wind_inside_rects: List[Tuple[Union[float, int], ...]] = ...
 
         super().__init__(**options)
 
@@ -250,8 +250,10 @@ class Rect(BaseContent):
         self.code()
 
     def code(self):
-        wind = f"\n{' '.join([str(i) for i in self._wind_inside_rect])} re " \
-               f"f{'*' if self._wind_style == 'WIND_EVEN_ODD' else ''}" if self._wind else ""
+        wind = ""
+        if self._wind and len(self._wind_inside_rects) > 0:
+            rects = '\n'.join([' '.join([str(i) for i in rect]) + ' re' for rect in self._wind_inside_rects])
+            wind = f"\n{rects} f{'*' if self._wind_style == 'WIND_EVEN_ODD' else ''}"
         self._code = f"{str(self._line_width)} w\n" \
                      f"{' '.join([str(i) for i in self._color])} RG\n" \
                      f"{(' '.join([str(i) for i in self._wind_color]) + ' rg') if self._wind else ''}\n" \

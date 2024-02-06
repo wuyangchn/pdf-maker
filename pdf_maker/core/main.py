@@ -148,7 +148,6 @@ class NewPDF:
         """
         if filepath == "":
             filepath = self.filepath
-        print(filepath)
         with open(filepath, 'wb') as f:
             f.write(self.get_byte())
 
@@ -294,6 +293,7 @@ class NewPDF:
         contents_page = self.get_obj(index=page.get_contents_index())
         for comp in canvas.all_components():
             # print(comp.name())
+            # print(type(comp))
             if isinstance(comp, Text):
                 comp._font_name = font_name
                 comp._font = font
