@@ -117,7 +117,6 @@ class Obj:
             for mtx in mtx_objs:
                 self._widths.append(mtx.attrib.get('width', 0))
 
-
     def get_type(self):
         return self._type
 

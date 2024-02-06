@@ -21,6 +21,7 @@ cv = pm.Canvas(width=15, height=12, unit="cm", show_frame=True, frame_line_width
 pt = cv.plot_area()
 
 pt.text(name="TEXT01", x=50, y=50, text="hello", size=12, font="Arial", coordinate="scale")
+pt.text(name="TEXT02", x=40, y=70, text="hello", size=12, font="Arial", coordinate="scale")
 
 xs = np.random.randint(low=0, high=200, size=100)
 ys = np.random.randint(low=0, high=200, size=100)
