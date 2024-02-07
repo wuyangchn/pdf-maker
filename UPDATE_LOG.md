@@ -7,8 +7,6 @@
 * Add canvas
 
 # v0.0.3
-* to do: completing canvas
-* add other attributions such as FontDescriptor in the Font object.
-* recognize font information from xml files instead of tff files, and 
-now Adobe software can easily open the pdf files.
-* One bugs: text are densely aligned together.
+* Add other attributions such as FontDescriptor in the Font object.
+* Read font information from xml files, and embed them into the pdf.
+* A horizontal scale (integer) will be used to control the actual widths of characters, default 0.5.

@@ -30,11 +30,11 @@ class NewPDF:
         self._objs: List[Obj] = []
         self._pages = []
         self._crf: Crf = ...
-        self._header = "%PDF-1.4\n%âãÏÓ\n"
+        self._header = "%PDF-1.7\n"
         self._body = ""
 
         self.title = "NewPDF"
-        self.author = "PDF-Maker"
+        self.author = "Yang"
         self.producer = "https://pypi.org/project/pdf-maker/"
         self.creator = "PDF-Maker"
         self.page_size = (595, 842)
@@ -57,20 +57,16 @@ class NewPDF:
         self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages
         self.add_obj(obj=Obj(type="Pages", index="2", kids=[]))
-        # default obj: one page
-        self.add_obj(obj=Obj(type="Page", index="3", parent="2", contents="4",
-                             mediabox=[0, 0, *self.page_size],
-                             resources=Resources(font="F1", font_index="5", procset="[/PDF /Text]")))
-        # default obj: stream
-        self.add_obj(obj=Obj(type="Stream", index="4", text=[]))
         # default obj: font
-        self.add_obj(obj=Obj(type="Font", index="5", subtype="TrueType", name="F1", basefont=font,
-                             font_descriptor="8"))
-        # default obj: info
-        self.add_obj(obj=Obj(type="Info", index="6", title=self.title, author="Yang",
-                             producer=self.producer, creator=self.creator))
+        self.add_obj(obj=Obj(type="Font", index="3", subtype="Type1", name="F1", basefont=font,
+                             encoding="4", font_descriptor="5", horizontal_scale=0.5))
+        # Encoding
+        self.add_obj(obj=Obj(type="Encoding", index="4", font_name=font))
         # fontDescriptor
-        self.add_obj(obj=Obj(type="FontDescriptor", index="8", flags="4", font_name=font))
+        self.add_obj(obj=Obj(type="FontDescriptor", index="5", font_name=font))
+        # default obj: info
+        self.add_obj(obj=Obj(type="Info", index="6", title=self.title, author=self.author,
+                             producer=self.producer, creator=self.creator))
 
     def del_obj(self, index: int):
         found = False
@@ -104,17 +100,32 @@ class NewPDF:
         if isinstance(size, str):
             size = PAGE_SIZE.get(size, (595, 842))
         if resources is None:
-            font = self.get_obj(type="font")[0]
-            resources = Resources(font=font._name, font_index=font.index())
+            font = self.get_obj(type="Font")[0]
+            resources = Resources(font=font._name, font_index=font.index(), procset="[/PDF /Text]")
         if contents_index is None:
-            contents = self.add_obj(type="Stream")
+            stream = self.add_stream()
         else:
-            contents = self.get_obj(index=str(contents_index))
+            stream = self.get_obj(index=str(contents_index))
         pages_index = self.get_obj(type="Pages")[0].index()
-        return self.add_obj(type="page", parent=f"{pages_index}", contents=f"{contents.index()}",
+        return self.add_obj(type="Page", parent=f"{pages_index}", contents=f"{stream.index()}",
                             mediabox=[0, 0, *size], resources=resources)
 
+    def add_stream(self):
+        stream = self.add_obj(type="Stream", text=[])  # stream must be created firstly
+        length = self.add_obj(type="StreamLength", prefix="")
+        stream._length = length.index()
+        return stream
+
     def get_obj(self, type: str = None, index: Union[str, int] = None):
+        """
+        Args:
+            type: If type is given will return a list of objects with this type.
+                  Note that the type should be totally correct. Can be empty.
+            index: If index is given will return the first object matched.
+                   Will raise Index error if no object with such index.
+        Returns:
+
+        """
         if type is not None:
             return [obj for obj in self._objs if obj.get_type() == type]
         if index is not None:
@@ -238,9 +249,11 @@ class NewPDF:
         body = ""
         for obj in self._objs:
             body = body + obj.data()
-            obj._offset = (self.header() + body).find(f"{obj.index()} 0 obj")
+            obj._offset = (self.header() + body).encode('utf-8').find(f"{obj.index()} 0 obj".encode('utf-8'))
             obj._number = "00000"
             obj._state = "n"
+            if obj.get_type() == "Stream" and obj.length() != "":
+                self.get_obj(index=obj._length)._prefix = len(obj._stream.encode('utf-8'))
         self._body = body
         return self._body
 
@@ -248,7 +261,7 @@ class NewPDF:
         self._crf = Crf(objs=[
             {"offset": obj.offset(), "number": obj.number(), "state": obj.state()} for obj in self._objs])
         data = self._crf.data()
-        self._crf._startoffset = (self._header + self._body + data).find("xref")
+        self._crf._startoffset = (self._header + self._body + data).encode('utf-8').find(b"xref")
         return data
 
     def trailer(self):

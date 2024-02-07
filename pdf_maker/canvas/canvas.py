@@ -46,7 +46,7 @@ class Canvas(Area):
             plot_width, plot_height = self._width * plot_area[2], self._height * plot_area[3]
             margin_left = self._margin_left + self._width * plot_area[0]
             margin_bottom = self._margin_bottom + self._height * plot_area[1]
-            plt = PlotArea(name=name, margin_left=margin_left, margin_bottom=margin_bottom, show_frame=True,
+            plt = PlotArea(name=name, margin_left=margin_left, margin_bottom=margin_bottom,
                            width=plot_width, height=plot_height, scale=plot_scale, unit="pt", **options)
         self._add_plot_area(plt)
         return plt

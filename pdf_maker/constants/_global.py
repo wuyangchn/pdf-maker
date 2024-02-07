@@ -76,5 +76,5 @@ LINE_STYLE: Mapping[str, Union[int, float]] = {
 WIND = ["WIND_EVEN_ODD", "WIND_NON_ZERO"]
 
 KEYNAMES = [
-    "__ClipOutsidePlotAreas"
+    "__ClipOutsidePlotAreas", "__CanvasFrame"
 ]

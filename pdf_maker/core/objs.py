@@ -14,10 +14,13 @@ import re
 from datetime import datetime, timezone, timedelta
 from .comps import BaseContent, Text, Scatter, Line, Rect, FONT_LIB
 from xml.etree import ElementTree
+import io
 
 
 class Resources:
-    def __init__(self, font, font_index, procset, **options):
+    def __init__(self, font, font_index, procset: str = None, **options):
+        if procset is None:
+            procset = "[/PDF /Text]"
         self._font = font
         self._font_index = font_index
         self._procset = procset
@@ -45,6 +48,7 @@ class Resources:
 
 class Obj:
     def __init__(self, index, type, **options):
+        self._prefix: str = ""
         self._pages: str = ""
         self._basefont = ""
         self._name = ""
@@ -73,7 +77,8 @@ class Obj:
         self._number: Union[str, int] = ""
         self._state: str = "n"
         self._font_name = ""
-        self._encoding = "WinAnsiEncoding"
+        self._encoding = ""
+        self._base_encoding = ""  # "MacRomanEncoding", "MacExpertEncoding", or "WinAnsiEncoding"
         self._font_bbox = [-166, -225, 1000, 931]
         self._flags = ""
         self._ascent = ""
@@ -83,7 +88,11 @@ class Obj:
         self._stemv = ""
         self._missing_width = ""
         self._font_descriptor = ""
+        self._first_char = ""
+        self._last_char = ""
         self._widths = []
+        self._differences = []
+        self._horizontal_scale = 1
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -91,10 +100,14 @@ class Obj:
                 if hasattr(self, name) and not callable(getattr(self, name)):
                     setattr(self, name, value)
 
+        self._data = ""
+        self._stream = ""
+
         if self.get_type() == "FontDescriptor":
             tree = ElementTree.parse(FONT_LIB.get(str(self._font_name).lower()))
             root = tree.getroot()
             head_obj = root.find('head')
+            hhea_obj = root.find('hhea')
             OS_2_obj = root.find('OS_2')
             post_obj = root.find('post')
             self._flags = head_obj.find("flags").attrib['value']
@@ -106,15 +119,58 @@ class Obj:
             self._italic_angle = post_obj.find("italicAngle").attrib['value']
             self._ascent = OS_2_obj.find("sTypoAscender").attrib['value']
             self._descent = OS_2_obj.find("sTypoDescender").attrib['value']
+            self._ascent = hhea_obj.find("ascent").attrib['value']
+            self._descent = hhea_obj.find("descent").attrib['value']
             self._cap_height = OS_2_obj.find("sCapHeight").attrib['value']
-            self._missing_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
+            self._font_weight = OS_2_obj.find("usWeightClass").attrib['value']
+            # The possible values of font weight are 100, 200, 300, 400, 500, 600, 700, 800, or 900
+            self._stemv = int(10 + 220 * (int(OS_2_obj.find("usWeightClass").attrib['value']) - 50) / 900)
 
-        if self.get_type() == "Font":
-            tree = ElementTree.parse(FONT_LIB.get(str(self._basefont).lower()))
+            self._avg_char_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
+            self._max_char_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
+            self._first_char = OS_2_obj.find("usFirstCharIndex").attrib['value']
+            self._last_char = OS_2_obj.find("usLastCharIndex").attrib['value']
+            self._x_height = OS_2_obj.find("sxHeight").attrib['value']
+
+            self._missing_width = self._avg_char_width
+
+        if self.get_type() == "Font" or self.get_type() == "Encoding":
+            tree = ElementTree.parse(FONT_LIB.get(str(self._basefont or self._font_name).lower()))
             root = tree.getroot()
             mtx_objs = root.find('hmtx').findall('mtx')
-            for mtx in mtx_objs:
-                self._widths.append(mtx.attrib.get('width', 0))
+            map_objs = root.find('cmap').find('cmap_format_4').findall('map')
+            OS_2_obj = root.find('OS_2')
+            self._missing_width = int(int(OS_2_obj.find("xAvgCharWidth").attrib['value']) * self._horizontal_scale)
+            # pixels_per_em = root.find('head').find('unitsPerEm').items()
+            # print(pixels_per_em)
+
+            chars = {}
+            self._differences = []
+            for map_obj in map_objs:
+                chars.update({int(map_obj.attrib.get("code"), 16): {"name": map_obj.attrib.get("name")}})
+                self._differences.append(f"{int(map_obj.attrib.get('code'), 16)} /{map_obj.attrib.get('name')}")
+
+            chars_list = [(code, char['name'], self._missing_width, "0") for code, char in chars.items()]
+            chars_list = sorted(chars_list, key=lambda x: x[0])
+            char_names = [char[1] for char in chars_list]
+            char_codes = [char[0] for char in chars_list]
+
+            mtx_list = [(mtx.attrib.get('name'), mtx.attrib.get('width'), mtx.attrib.get('lsb')) for mtx in mtx_objs]
+
+            # 选取ASCII 255个标准字符
+            self._first_char = 0
+            self._last_char = 255
+            for i in range(self._first_char, self._last_char + 1):
+                if i not in char_codes:
+                    chars_list.append((i, "", f"{self._missing_width}", "0"))
+                else:
+                    name = char_names[char_codes.index(i)]
+                    index = [mtx[0] for mtx in mtx_list].index(name)
+                    if index != -1:
+                        chars_list[char_codes.index(i)] = (
+                            i, name, f"{int(int(mtx_list[index][1]) * self._horizontal_scale)}", mtx_list[index][2])
+            chars_list = sorted(chars_list, key=lambda x: x[0])
+            self._widths = [char[2] for char in chars_list[self._first_char:(self._last_char + 1)]]
 
     def get_type(self):
         return self._type
@@ -122,32 +178,36 @@ class Obj:
     def type(self, type: str = None):
         if type is not None:
             self._type = type
-        if self.get_type() in ["Page", "Pages", "Font", "Catalog", "FontDescriptor"]:
+        if self.get_type() in ["Page", "Pages", "Font", "Catalog", "Encoding", "FontDescriptor"]:
             return f"/Type /{self.get_type()}\n"
         return ""
 
     def data(self):
-        # attributes = [
-        #     "Type", "Kids", "Parent", "Mediabox", "Contents",
-        #     "Resources", "Length", "Subtype", "Name", "Basefont",
-        #     "Pages", "Title", "Author", "Producer", "Creator",
-        #     "CreateDate", "ModDate", "Subject", "Keywords"
-        #
-        # ]
-        return f"{self.index()} 0 obj\n" \
+        data = f"{self.index()} 0 obj\n{self._prefix}\n" \
                f"<<\n{self.type()}{self.kids()}" \
                f"{self.parent()}{self.mediabox()}{self.contents()}{self.resources()}" \
-               f"{self.length()}{self.subtype()}{self.name()}{self.widths()}" \
+               f"{self.length()}{self.subtype()}{self.name()}{self.first_char()}{self.last_char()}" \
+               f"{self.widths()}{self.base_encoding()}{self.differences()}" \
                f"{self.basefont()}{self.encoding()}{self.pages()}{self.font_descriptor()}" \
                f"{self.title()}{self.author()}{self.producer()}{self.creator()}" \
-               f"{self.font_bbox()}{self.flags()}{self.ascent()}{self.descent()}" \
-               f"{self.cap_height()}{self.italicangle()}{self.stemv()}{self.missingwidth()}" \
+               f"{self.font_bbox()}{self.font_name()}{self.flags()}{self.ascent()}{self.descent()}" \
+               f"{self.cap_height()}{self.italic_angle()}{self.stemv()}{self.missing_width()}" \
                f"{self.creation_date()}{self.mod_date()}{self.subject()}{self.keywords()}" \
                f">>\n" \
                f"{self.stream()}" \
                f"endobj\n"
+        self._data = data
+        return data
 
     """ Attributes of objects """
+    def _base_attr(self, key, val, is_index: bool = False):
+        if isinstance(val, str) and val.startswith("/") and val[1:] == "":
+            return ""
+        if val != "" and val is not None:
+            return f"{key} {val} {'0 R' if is_index else ''}\n"
+        else:
+            return ""
+
     def pages(self, pages: int = None):
         if self.get_type() != "Catalog":
             return ""
@@ -155,7 +215,7 @@ class Obj:
             pass
         if self.get_type() != "Catalog" or not self._pages.isdigit():
             return ""
-        return f"/Pages {self._pages} 0 R\n"
+        return self._base_attr("/Pages", self._pages, True)
 
     def kids(self, kids: Union[list, int, str] = None):
         if self.get_type() != "Pages":
@@ -178,7 +238,7 @@ class Obj:
             self._parent = str(parent)
         if not self._parent.isdigit():
             return ""
-        return f"/Parent {str(self._parent)} 0 R\n"
+        return self._base_attr("/Parent", str(self._parent), True)
 
     def contents(self, contents: int = None):
         if self.get_type() != "Page":
@@ -187,7 +247,7 @@ class Obj:
             self._contents = str(contents)
         if not self._contents.isdigit():
             return ""
-        return f"/Contents {str(self._contents)} 0 R\n"
+        return self._base_attr("/Contents", str(self._contents), True)
 
     def resources(self, resources: Resources = None):
         if self.get_type() != "Page":
@@ -197,54 +257,89 @@ class Obj:
         if not isinstance(self._resources, Resources):
             return ""
         resources = self._resources.code()
-        return f"/Resources <<\n{resources}>>\n"
+        return self._base_attr("/Resources", f"<<\n{resources}>>")
 
     def length(self, length: int = None):
         if self.get_type() != "Stream":
             return ""
-        content = self.stream()
-        content = content.rstrip("\n")
-        self._length = len(content)
         if length is not None:
             self._length = str(length)
         if not str(self._length).isdigit():
             return ""
-        return f"/Length {self._length}\n"
+        return self._base_attr("/Length", f"{self._length} 0 R")
 
     def subtype(self, subtype: str = None):
         if self.get_type() != "Font":
             return ""
         if subtype is not None:
             self._subtype = subtype
-        return f"/Subtype /{self._subtype}\n"
+        return self._base_attr("/Subtype", f"/{self._subtype}")
 
     def name(self, name: str = None):
         if self.get_type() != "Font":
             return ""
         if name is not None:
             self._name = name
-        return f"/Name /{self._name}\n"
+        return self._base_attr("/Name", f"/{self._name}")
 
     def basefont(self, basefont: str = None):
         if self.get_type() != "Font":
             return ""
         if basefont is not None:
             self._basefont = basefont
-        return f"/BaseFont /{self._basefont}\n"
+        return self._base_attr("/BaseFont", f"/{self._basefont}")
 
     def encoding(self, encoding: str = None):
         if self.get_type() != "Font":
             return ""
         if encoding is not None:
             self._encoding = encoding
-        return f"/Encoding /{self._encoding}\n"
+        return self._base_attr("/Encoding", self._encoding, True)
+
+    def base_encoding(self, base_encoding: str = None):
+        if self.get_type() != "Encoding":
+            return ""
+        if base_encoding is not None:
+            self._base_encoding = base_encoding
+        return self._base_attr("/BaseEncoding", f"/{self._base_encoding}")
+
+    def differences(self, differences=None):
+        if self.get_type() != "Encoding":
+            return ""
+        if differences is not None:
+            self._differences = differences
+        else:
+            try:
+                differences = ""
+                for index, item in enumerate(self._differences):
+                    if (index + 1) % 10 == 0:
+                        differences = differences + f"{item}" + "\n"
+                    else:
+                        differences = differences + f"{item}" + " "
+            except (KeyError, AttributeError):
+                return ""
+        return f"/Differences\n[{differences}]\n"
 
     def font_descriptor(self, font_descriptor: Union[str, int] = None):
         if self.get_type() != "Font":
             return ""
         if font_descriptor is not None:
             self._font_descriptor = font_descriptor
-        return f"/FontDescriptor {self._font_descriptor} 0 R\n"
+        return self._base_attr("/FontDescriptor", self._font_descriptor, True)
+
+    def first_char(self, first_char: Union[str, int] = None):
+        if self.get_type() != "Font":
+            return ""
+        if first_char is not None:
+            self._first_char = first_char
+        return self._base_attr("/FirstChar", self._first_char)
+
+    def last_char(self, last_char: Union[str, int] = None):
+        if self.get_type() != "Font":
+            return ""
+        if last_char is not None:
+            self._last_char = last_char
+        return self._base_attr("/LastChar", self._last_char)
 
     def widths(self, widths=None):
         if self.get_type() != "Font":
@@ -261,7 +356,7 @@ class Obj:
                         widths = widths + item + " "
             except (KeyError, AttributeError):
                 return ""
-        return f"/Widths [{widths}]\n"
+        return f"/Widths\n[{widths}]\n"
 
     def mediabox(self, mediabox: Union[tuple, list] = None):
         if self.get_type() != "Page":
@@ -337,7 +432,7 @@ class Obj:
             self._font_name = font_name
         if self.get_type() != "FontDescriptor":
             return ""
-        return f"/FontName /{self._font_name}\n"
+        return self._base_attr("/FontName", f"/{self._font_name}")
 
     def font_bbox(self, font_bbox: List[Union[int, str]] = None):
         if self.get_type() != "FontDescriptor":
@@ -351,58 +446,64 @@ class Obj:
             return ""
         if flags is not None:
             self._flags = flags
-        return f"/Flags {self._flags}\n"
+        return self._base_attr("/Flags", self._flags)
 
     def ascent(self, ascent: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
         if ascent is not None:
             self._ascent = ascent
-        return f"/Ascent {self._ascent}\n"
+        return self._base_attr("/Ascent", self._ascent)
 
     def descent(self, descent: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
         if descent is not None:
             self._descent = descent
-        return f"/Descent {self._descent}\n"
+        return self._base_attr("/Descent", self._descent)
 
     def cap_height(self, cap_height: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
         if cap_height is not None:
             self._cap_height = cap_height
-        return f"/CapHeight {self._cap_height}\n"
+        return self._base_attr("/CapHeight", self._cap_height)
 
-    def italicangle(self, italicangle: Union[int, str] = None):
+    def italic_angle(self, italicangle: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
         if italicangle is not None:
             self._italic_angle = italicangle
-        return f"/ItalicAngle {self._italic_angle}\n"
+        return self._base_attr("/ItalicAngle", self._italic_angle)
 
     def stemv(self, stemv: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
-        self._stemv = 90
         if stemv is not None:
             self._stemv = stemv
-        return f"/Stemv {self._stemv}\n"
+        return self._base_attr("/StemV", self._stemv)
 
-    def missingwidth(self, missing_width: Union[int, str] = None):
+    def font_weight(self, font_weight: Union[int, str] = None):
+        if self.get_type() != "FontDescriptor":
+            return ""
+        if font_weight is not None and font_weight.isdigit():
+            self._font_weight = font_weight
+        return self._base_attr("/FontWeight", self._font_weight)
+
+    def missing_width(self, missing_width: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
         if missing_width is not None:
             self._missing_width = missing_width
-        return f"/MissingWidth {self._missing_width}\n"
+        return self._base_attr("/MissingWidth", self._missing_width)
 
     def stream(self):
         if self.get_type() != "Stream":
             return ""
         contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter], key=lambda obj: obj.z_index())
         code = '\n'.join([obj.code() for obj in contents])
-        stream = f"stream\n{code}\nendstream\n"
-        return stream
+        self._stream = code
+        return f"stream\n{code}\nendstream\n"
 
     """ Functions """
     def text(self, text: Text):

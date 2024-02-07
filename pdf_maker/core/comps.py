@@ -37,16 +37,10 @@ class BaseContent:
     def z_index(self):
         return self._z_index
 
-    # def __getattribute__(self, name):
-    #     try:
-    #         return object.__getattribute__(self, name)
-    #     except AttributeError:
-    #         return object.__getattribute__(self, f"_{name}")
-
 
 class Text(BaseContent):
     def __init__(self, font_name, size, x, y, text, font, **options):
-        self._font_name = font_name
+        self._font_name = font_name  # font name defined in page resources
         self._font = font
         self._size = size
         self._x = x

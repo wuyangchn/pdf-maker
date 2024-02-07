@@ -17,7 +17,9 @@ from pdf_maker.core.comps import Text, Line, Scatter, Rect
 class Area:
     def __init__(self, width, height, show_frame: bool = False, margin_left: int = 0,
                  margin_bottom: int = 0, unit: str = "point", ppi: int = 72,
-                 background_color: List[int] = COLOR_PALETTE["white"], frame_line_width: int = 1, **options):
+                 background_color: List[int] = COLOR_PALETTE["white"], frame_line_width: int = 1,
+                 show_frames: bool = True,
+                 **options):
         self._ppi = ppi
         self._unit = unit
         self._width, self._height = self.unit_to_points(width, height, unit=unit)
@@ -27,7 +29,7 @@ class Area:
         self._background_color: List[int] = background_color
         self._transparency: float = ...
         self._components: List[Union[Text, Line, Scatter, Rect], ...] = []
-        self._show_frame: bool = ...
+        self._show_frame: bool = show_frames
 
         if show_frame:
             self.show_frame()
@@ -104,17 +106,17 @@ class Area:
                 return comp
 
     def show_frame(self):
-        if self._show_frame and isinstance(self._show_frame, bool):
+        if self._show_frame and self.has_comp(comp_name="__CanvasFrame"):
             self.remove_frame()
         self._show_frame = True
-        if not self.has_comp("CanvasFrame"):
+        if not self.has_comp("__CanvasFrame"):
             rect = Rect(x=self._margin_left, y=self._margin_bottom, width=self._width, height=self._height,
-                        name="CanvasFrame", line_width=self._frame_line_width)
+                        name="__CanvasFrame", line_width=self._frame_line_width)
             self._components.append(rect)
 
     def remove_frame(self):
         self._show_frame = False
-        self.del_component(comp=self.get_comp(comp_name="CanvasFrame"))
+        self.del_component(comp=self.get_comp(comp_name="__CanvasFrame"))
 
     def text(self, x: int, y: int, text: str, size: int = 12, font: str = "Arial", **options):
         text = Text(font_name="", size=size, x=x, y=y, text=text, font=font, **options)
