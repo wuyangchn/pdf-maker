@@ -12,14 +12,21 @@
 import re
 from fontTools.ttLib import TTFont
 from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Mapping
 from xml.etree import ElementTree
 
 
 class BaseContent:
-    def __init__(self, name: str = "", z_index: int = 0, **options):
+    def __init__(self, name: str = "", z_index: int = 0, x: int = 0, y: int = 0,
+                 width: int = 0, height: int = 0, **options):
         self._name = name
+        self._x = x
+        self._y = y
+        self._width = width
+        self._height = height
         self._z_index = z_index
+        self._h_align: str = "left"
+
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
             for name in names:
@@ -37,14 +44,20 @@ class BaseContent:
     def z_index(self):
         return self._z_index
 
+    def _align(self):
+        if self._h_align == "left":
+            pass
+        elif self._h_align == "middle":
+            self._x = self._x - self._width / 2
+        elif self._h_align == "right":
+            self._x = self._x - self._width
+
 
 class Text(BaseContent):
-    def __init__(self, font_name, size, x, y, text, font, **options):
+    def __init__(self, font_name, size, text, font, **options):
         self._font_name = font_name  # font name defined in page resources
         self._font = font
         self._size = size
-        self._x = x
-        self._y = y
         self._text = text
         self._sub_size = int(self._size * 2. / 3.)
         self._sup_size = int(self._size * 2. / 3.)
@@ -53,21 +66,43 @@ class Text(BaseContent):
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
         self._line_space = 1.3
         self._line_height = 0
+        self._font_widths: Mapping[int, int] = ...
+        self._units_per_em: int = 2048
+        self._dpi = 96    # points per inch, usually 72
 
         super().__init__(**options)
 
         if isinstance(self._color, str):
             self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
 
-        self.code()
+        # self.code()
 
     def code(self):
-        self._line_height = ((abs(self._sub_Ts)) + max(
-            (abs(self._sup_Ts) + self.get_text_height(self._text, self._font, self._sup_size)),
-            self.get_text_height(self._text, self._font, self._size))) * self._line_space
         text_list = self.read_rich_text(self._text)
-        self._code = f"BT\n{self._x} {self._y} Td\n" + "\n".join([f"/{self._font_name} {self.size(script)} Tf\n{color} rg\n{color} RG\n{self.Ts(script)} Ts\n{f'0 -{self._line_height} Td' if r == 'r' else ''}\n({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
+        text_in_lines = [""]
+        for text in text_list:
+            if text[3] == "r":
+                text_in_lines.append("")
+            text_in_lines[-1] = text_in_lines[-1] + text[0]
+        self._width = max([sum([self.get_char_width(char) for char in text]) for text in text_in_lines])
+        self._align()
+        self._code = f"BT\n{self._x} {self._y} Td\n" + "\n".join([f"/{self._font_name} {self.size(script)} Tf\n{color} rg\n{color} RG\n{self.Ts(script)} Ts\n{f'0 -{self.get_line_height()} Td' if r == 'r' else ''}\n({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
         return self._code
+
+    def get_line_height(self):
+        # font_height = self.get_font_height(self._text, self._font)
+        font_height = FONT_LIB.get(self._font.lower())['line_height']
+        self._line_height = ((abs(self._sub_Ts)) + max(
+            (abs(self._sup_Ts) + int(font_height * self._sup_size)), int(font_height * self._size))) * self._line_space
+        return self._line_height
+
+    def get_char_width(self, char: str):
+        if not isinstance(self._font_widths, dict):
+            return 0
+        # why we need to multiply 2
+        width = float(self._font_widths.get(ord(char), 0)) / float(self._units_per_em) * float(self._size) * 2
+        # print(f"{char = }, {width = }, size = {self._size}")
+        return width
 
     def size(self, flag: str):
         if flag == "sub": return self._sub_size
@@ -121,8 +156,8 @@ class Text(BaseContent):
         return "".join([chr(int(f"0x{each}", 16)) for each in code.lstrip("FEFF").split(" ")])
 
     @staticmethod
-    def get_text_width(text: str, font: str, size: int):
-        font = TTFont(FONT_LIB.get(str(font).lower()))
+    def get_font_width(text: str, font: str, size: int):
+        font = TTFont(FONT_LIB.get(str(font).lower())['file'])
         cmap = font['cmap']
         t = cmap.getcmap(3, 1).cmap
         s = font.getGlyphSet()
@@ -137,14 +172,8 @@ class Text(BaseContent):
         return int(total)
 
     @staticmethod
-    def get_text_height(text: str, font: str, size: int):
-        # font = TTFont(FONT_LIB.get(str(font).lower()))
-        # pixels_per_em = font['head'].unitsPerEm
-        # ascender = font['OS/2'].sTypoAscender
-        # descender = font['OS/2'].sTypoDescender
-        # line_gap = font['OS/2'].sTypoLineGap
-
-        tree = ElementTree.parse(FONT_LIB.get(font.lower()))
+    def get_font_height(text: str, font: str):
+        tree = ElementTree.parse(FONT_LIB.get(font.lower())['file'])
         root = tree.getroot()
         head_obj = root.find('head')
         OS_2_obj = root.find('OS_2')
@@ -152,8 +181,8 @@ class Text(BaseContent):
         ascender = OS_2_obj.find("sTypoAscender").attrib['value']
         descender = OS_2_obj.find("sTypoDescender").attrib['value']
         line_gap = OS_2_obj.find("sTypoLineGap").attrib['value']
-        line_height = (float(ascender) + float(descender) + float(line_gap)) / float(pixels_per_em) * size
-        return int(line_height)
+        line_height = (float(ascender) + float(descender) + float(line_gap)) / float(pixels_per_em)
+        return line_height
 
 
 class Line(BaseContent):
@@ -169,7 +198,7 @@ class Line(BaseContent):
         if isinstance(self._color, str):
             self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
 
-        self.code()
+        # self.code()
 
     def code(self, start=None, end=None, lt: str = None):
         if start is None or end is None:
@@ -223,11 +252,7 @@ class Line(BaseContent):
 
 
 class Rect(BaseContent):
-    def __init__(self, x, y, width, height, **options):
-        self._x = x
-        self._y = y
-        self._width = width
-        self._height = height
+    def __init__(self, **options):
         self._line_width = 1
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
         self._fill: bool = False
@@ -241,7 +266,7 @@ class Rect(BaseContent):
         if isinstance(self._color, str):
             self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
 
-        self.code()
+        # self.code()
 
     def code(self):
         wind = ""
@@ -256,15 +281,13 @@ class Rect(BaseContent):
 
 
 class Scatter(BaseContent):
-    def __init__(self, x, y, **options):
+    def __init__(self, **options):
         """
         Args:
             x: center of the point
             y: center of the point
             **options: type: circle, rectangle
         """
-        self._x = x
-        self._y = y
         self._size = 5
         self._line_width = 1
         self._fill_color = COLOR_PALETTE.get('black', [0, 0, 0])
@@ -279,7 +302,7 @@ class Scatter(BaseContent):
         if isinstance(self._stroke_color, str):
             self._stroke_color = COLOR_PALETTE.get(self._stroke_color, [0, 0, 0])
 
-        self.code()
+        # self.code()
 
     def code(self):
         stroke_color = f"{' '.join([str(i) for i in self._stroke_color])} RG"

@@ -14,7 +14,6 @@ import re
 from datetime import datetime, timezone, timedelta
 from .comps import BaseContent, Text, Scatter, Line, Rect, FONT_LIB
 from xml.etree import ElementTree
-import io
 
 
 class Resources:
@@ -93,6 +92,7 @@ class Obj:
         self._widths = []
         self._differences = []
         self._horizontal_scale = 1
+        self._units_per_em = 2048
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -104,44 +104,31 @@ class Obj:
         self._stream = ""
 
         if self.get_type() == "FontDescriptor":
-            tree = ElementTree.parse(FONT_LIB.get(str(self._font_name).lower()))
-            root = tree.getroot()
-            head_obj = root.find('head')
-            hhea_obj = root.find('hhea')
-            OS_2_obj = root.find('OS_2')
-            post_obj = root.find('post')
-            self._flags = head_obj.find("flags").attrib['value']
-            xMin = head_obj.find("xMin").attrib['value']
-            yMin = head_obj.find("yMin").attrib['value']
-            xMax = head_obj.find("xMax").attrib['value']
-            yMax = head_obj.find("yMax").attrib['value']
-            self._font_bbox = [xMin, yMin, xMax, yMax]
-            self._italic_angle = post_obj.find("italicAngle").attrib['value']
-            self._ascent = OS_2_obj.find("sTypoAscender").attrib['value']
-            self._descent = OS_2_obj.find("sTypoDescender").attrib['value']
-            self._ascent = hhea_obj.find("ascent").attrib['value']
-            self._descent = hhea_obj.find("descent").attrib['value']
-            self._cap_height = OS_2_obj.find("sCapHeight").attrib['value']
-            self._font_weight = OS_2_obj.find("usWeightClass").attrib['value']
-            # The possible values of font weight are 100, 200, 300, 400, 500, 600, 700, 800, or 900
-            self._stemv = int(10 + 220 * (int(OS_2_obj.find("usWeightClass").attrib['value']) - 50) / 900)
-
-            self._avg_char_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
-            self._max_char_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
-            self._first_char = OS_2_obj.find("usFirstCharIndex").attrib['value']
-            self._last_char = OS_2_obj.find("usLastCharIndex").attrib['value']
-            self._x_height = OS_2_obj.find("sxHeight").attrib['value']
-
-            self._missing_width = self._avg_char_width
+            font = FONT_LIB.get(str(self._font_name).lower())
+            self._flags = font["flags"]
+            self._font_bbox = font["font_bbox"]
+            self._italic_angle = font["italic_angle"]
+            self._ascent = font["ascent"]
+            self._descent = font["descent"]
+            self._cap_height = font["cap_height"]
+            self._font_weight = font["font_weight"]  # The possible values of font weight are 100, 200, ..., 900
+            self._stemv = font["stemv"]
+            self._avg_char_width = font["avg_char_width"]
+            self._max_char_width = font["max_char_width"]
+            self._first_char = font["first_char"]
+            self._last_char = font["last_char"]
+            self._x_height = font["x_height"]
+            self._missing_width = font["missing_width"]
 
         if self.get_type() == "Font" or self.get_type() == "Encoding":
-            tree = ElementTree.parse(FONT_LIB.get(str(self._basefont or self._font_name).lower()))
+            font = FONT_LIB.get(str(self._basefont or self._font_name).lower())
+            tree = ElementTree.parse(font['file'])
             root = tree.getroot()
             mtx_objs = root.find('hmtx').findall('mtx')
             map_objs = root.find('cmap').find('cmap_format_4').findall('map')
             OS_2_obj = root.find('OS_2')
             self._missing_width = int(int(OS_2_obj.find("xAvgCharWidth").attrib['value']) * self._horizontal_scale)
-            # pixels_per_em = root.find('head').find('unitsPerEm').items()
+            self._units_per_em = int(root.find('head').find('unitsPerEm').attrib['value'])
             # print(pixels_per_em)
 
             chars = {}
@@ -150,7 +137,7 @@ class Obj:
                 chars.update({int(map_obj.attrib.get("code"), 16): {"name": map_obj.attrib.get("name")}})
                 self._differences.append(f"{int(map_obj.attrib.get('code'), 16)} /{map_obj.attrib.get('name')}")
 
-            chars_list = [(code, char['name'], self._missing_width, "0") for code, char in chars.items()]
+            chars_list = [(code, str(char['name']), str(self._missing_width), "0") for code, char in chars.items()]
             chars_list = sorted(chars_list, key=lambda x: x[0])
             char_names = [char[1] for char in chars_list]
             char_codes = [char[0] for char in chars_list]

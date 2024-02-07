@@ -93,28 +93,28 @@ class PlotArea(Area):
         return not (self._margin_left <= x <= self._margin_left + self._width and
                     self._margin_bottom <= y <= self._margin_bottom + self._height)
 
-    def text(self, x, y, coordinate="scale", **options):
+    def text(self, x, y, coordinate="scale", clip: bool = True, **options):
         if options.get("name", "") in KEYNAMES:
             raise ValueError(f"{options.get('name')} is reserved name that cannot be used.")
         x, y = self.scale_to_points(x, y, coordinate)
-        if self.is_out_side(x, y):
-            warnings.warn(f"The given text at {x, y} is on the outside of the plot area, "
-                          f"and thus will have no effect.", UserWarning)
-        else:
-            return super(PlotArea, self).text(x=x, y=y, **options)
+        if clip:
+            if self.is_out_side(x, y):
+                warnings.warn(f"The given text at {x, y} is on the outside of the plot area, "
+                              f"and thus will have no effect.", UserWarning)
+        return super(PlotArea, self).text(x=x, y=y, **options)
 
-    def line(self, start: List[int], end: List[int], coordinate="scale", **options):
+    def line(self, start: List[int], end: List[int], coordinate="scale", clip: bool = True, **options):
         if options.get("name", "") in KEYNAMES:
             raise ValueError(f"{options.get('name')} is reserved name that cannot be used.")
         start = self.scale_to_points(*start, coordinate)
         end = self.scale_to_points(*end, coordinate)
-        try:
-            start, end = self.clip_line(start, end)
-        except TypeError:
-            warnings.warn(f"The line from {start} to {end} is on the outside of the plot area, "
-                          f"and thus will have no effect.", UserWarning)
-        else:
-            return super(PlotArea, self).line(start=list(start), end=list(end), **options)
+        if clip:
+            try:
+                start, end = self.clip_line(start, end)
+            except TypeError:
+                warnings.warn(f"The line from {start} to {end} is on the outside of the plot area, "
+                              f"and thus will have no effect.", UserWarning)
+        return super(PlotArea, self).line(start=list(start), end=list(end), **options)
 
     def rect(self, left_bottom: Union[list, tuple], width: Union[int, float], height: Union[int, float],
              coordinate: str = "scale", **options):

@@ -17,14 +17,12 @@ from pdf_maker.core.comps import Text, Line, Scatter, Rect
 class Area:
     def __init__(self, width, height, show_frame: bool = False, margin_left: int = 0,
                  margin_bottom: int = 0, unit: str = "point", ppi: int = 72,
-                 background_color: List[int] = COLOR_PALETTE["white"], frame_line_width: int = 1,
-                 show_frames: bool = True,
+                 background_color: List[int] = COLOR_PALETTE["white"], show_frames: bool = True,
                  **options):
-        self._ppi = ppi
+        self._ppi = ppi  # points per inch, usually 72
         self._unit = unit
         self._width, self._height = self.unit_to_points(width, height, unit=unit)
         self._margin_left, self._margin_bottom = self.unit_to_points(margin_left, margin_bottom, unit=unit)
-        self._frame_line_width = frame_line_width
 
         self._background_color: List[int] = background_color
         self._transparency: float = ...
@@ -105,13 +103,13 @@ class Area:
             if comp.name() == comp_name:
                 return comp
 
-    def show_frame(self):
+    def show_frame(self, **options):
         if self._show_frame and self.has_comp(comp_name="__CanvasFrame"):
             self.remove_frame()
         self._show_frame = True
         if not self.has_comp("__CanvasFrame"):
             rect = Rect(x=self._margin_left, y=self._margin_bottom, width=self._width, height=self._height,
-                        name="__CanvasFrame", line_width=self._frame_line_width)
+                        name="__CanvasFrame", **options)
             self._components.append(rect)
 
     def remove_frame(self):
@@ -144,7 +142,8 @@ class Area:
             color = "black"
         if isinstance(color, str):
             color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
-        rect = Rect(*left_bottom, width=width, height=height, line_width=line_width, color=color, **options)
+        rect = Rect(x=left_bottom[0], y=left_bottom[1], width=width, height=height, line_width=line_width,
+                    color=color, **options)
         self._components.append(rect)
         return rect
 

@@ -12,8 +12,8 @@
 from .objs import Obj, Resources, Text, Line, Rect, Scatter
 from pdf_maker.canvas import PlotArea, Canvas
 from .crf import Crf
-from pdf_maker.constants._global import PAGE_SIZE, FONT_LIB
-from typing import List, Union
+from pdf_maker.constants._global import PAGE_SIZE, FONT_LIB, HALIGN, VALIGN, UNIT
+from typing import List, Union, Tuple
 
 
 COLOR_PALETTE: dict = {
@@ -39,6 +39,7 @@ class NewPDF:
         self.creator = "PDF-Maker"
         self.page_size = (595, 842)
         self.filepath = filepath
+        self.ppi = 72
 
         self.content_bytes = b""
         self.content_str = ""
@@ -52,7 +53,8 @@ class NewPDF:
         if isinstance(self.page_size, str):
             self.page_size = PAGE_SIZE.get(self.page_size.lower(), (595, 842))
 
-        font = "Arial"
+        # font name should be capitalized
+        font = "Arial".capitalize()
         # default obj: catalog
         self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages
@@ -69,17 +71,13 @@ class NewPDF:
                              producer=self.producer, creator=self.creator))
 
     def del_obj(self, index: int):
-        found = False
         for obj in self._objs:
             if obj.index() == str(index):
                 self._objs.remove(obj)
-                found = True
+                if obj.get_type() == "Page":
+                    pages = self.get_obj(type="Pages")[0]
+                    pages.remove_kid(obj.index())
                 break
-        if not found:
-            return
-        if obj.get_type() == "Page":
-            pages = self.get_obj(type="Pages")[0]
-            pages.remove_kid(obj.index())
 
     def add_obj(self, index: Union[str, int] = None, type: str = None, obj: Obj = None, **options):
         if index is None:
@@ -94,7 +92,9 @@ class NewPDF:
         return obj
 
     def add_page(self, contents_index: Union[int, str] = None, size: Union[tuple, list, str] = None,
-                 resources: Resources = None):
+                 resources: Resources = None, unit: str = "pt"):
+        if isinstance(size, (tuple, list)):
+            size = (size[0] * UNIT[unit] * self.ppi, size[1] * UNIT[unit] * self.ppi)
         if size is None:
             size = "a4"
         if isinstance(size, str):
@@ -188,15 +188,14 @@ class NewPDF:
         page.page_size((width, height))
 
     def text(self, page: int, x: int, y: int, text: str, size: int = 12, base: int = 1, **options):
+        text = Text(font_name="", size=size, x=x, y=y, text=text, font="", **options)
         page = self.get_page(index=page, base=base)
-        font_name = page.get_font_name()
-        font = self.get_obj(type="Font")[0].get_basefont()
+        font = self.get_obj(type="Font")[0]
         contents_page = self.get_obj(index=page.get_contents_index())
-        text = Text(font_name=font_name, size=size, x=x, y=y, text=text, font=font, **options)
-        contents_page.text(text)
+        contents_page.text(self._add_font_info_to_text(text, font, page))
         return text
 
-    def line(self, page: int, start: List[int], end: List[int], width: Union[float, int] = None,
+    def line(self, page: int, start: Union[list, tuple], end: Union[list, tuple], width: Union[float, int] = None,
              color: Union[tuple, list, str] = None, **options):
         if width is None:
             width = 0.5
@@ -221,7 +220,8 @@ class NewPDF:
             color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
         page = self.get_page(index=page)
         contents_page = self.get_obj(index=page.get_contents_index())
-        rect = Rect(*left_bottom, width=width, height=height, line_width=line_width, color=color, **options)
+        rect = Rect(x=left_bottom[0], y=left_bottom[1], width=width, height=height,
+                    line_width=line_width, color=color, **options)
         contents_page.rect(rect)
         return rect
 
@@ -284,15 +284,17 @@ class NewPDF:
         page = pages._kids.pop(from_index - base)
         pages._kids.insert(to_index - base, page)
 
-    def canvas(self, page: int, margin_left: Union[int, float], margin_top: Union[int, float], unit: str,
-               canvas: Canvas, base: int = 1):
+    def canvas(self, page: int, canvas: Canvas, margin_left: Union[int, float] = 0, margin_top: Union[int, float] = 0,
+               unit: str = "pt", base: int = 1, v_align: str = "None", h_align: str = "None"):
         """
         Args:
-            unit:
-            margin_top:
-            margin_left:
             page:
             canvas:
+            margin_top:
+            margin_left:
+            unit: "cm", "mm", "pt"
+            h_align: alignment such as left, middle
+            v_align: alignment such as top, center
             base: from which indexing page number starts
 
         Returns:
@@ -300,24 +302,53 @@ class NewPDF:
         """
         page = self.get_page(index=page, base=base)
         left, top = canvas.unit_to_points(margin_left, margin_top, unit=unit)
-        canvas.left_bottom((left, page.page_size()[1] - top - canvas.height()))
-        font_name = page.get_font_name()
-        font = self.get_obj(type="Font")[0].get_basefont()
-        contents_page = self.get_obj(index=page.get_contents_index())
+        bottom = page.page_size()[1] - top - canvas.height()
+
+        if h_align.lower() in HALIGN:
+            if h_align.lower() == "left":
+                left = 0
+            elif h_align.lower() == "right":
+                left = page.page_size()[0] - canvas.width()
+            else:
+                left = (page.page_size()[0] - canvas.width()) / 2
+
+        if v_align.lower() in VALIGN:
+            if v_align.lower() == "top":
+                bottom = page.page_size()[1] - canvas.height()
+            elif v_align.lower() == "bottom":
+                bottom = 0
+            else:
+                bottom = (page.page_size()[1] - canvas.height()) / 2
+        # reset the position of the canvas
+        canvas.left_bottom((left, bottom))
+        # get font obj
+        font = self.get_obj(type="Font")[0]
+        # get content object of this page
+        contents_obj = self.get_obj(index=page.get_contents_index())
         for comp in canvas.all_components():
             # print(comp.name())
             # print(type(comp))
             if isinstance(comp, Text):
-                comp._font_name = font_name
-                comp._font = font
-                contents_page.text(comp)
+                contents_obj.text(self._add_font_info_to_text(text=comp, font=font, page=page))
             if isinstance(comp, Rect):
-                contents_page.rect(comp)
+                contents_obj.rect(comp)
             if isinstance(comp, Scatter):
-                contents_page.scatter(comp)
+                contents_obj.scatter(comp)
             if isinstance(comp, Line):
-                contents_page.line(comp)
+                contents_obj.line(comp)
         pass
+
+    @staticmethod
+    def _add_font_info_to_text(text: Text, font: Obj, page: Obj):
+        # widths of 256 ASCII characters
+        font_widths = dict(zip(list(range(0, 256)), [int(font._widths[i]) for i in range(256)]))
+        # other information
+        text._font_name = page.get_font_name()
+        text._font = font.get_basefont()
+        text._font_widths = font_widths
+        text._units_per_em = font._units_per_em
+        return text
+
 
 
 

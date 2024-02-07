@@ -17,13 +17,62 @@ SOURCE_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resource
 
 
 FONT_LIB = {
-    "arial": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
-    "Arial": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
-    "helvetica": os.path.join(SOURCE_ROOT, "font\\helvetica.xml"),
-    "Helvetica": os.path.join(SOURCE_ROOT, "font\\helvetica.xml"),
-    "helvetica-normal": os.path.join(SOURCE_ROOT, "font\\helvetica-normal.ttf"),
-    "Helvetica-Normal": os.path.join(SOURCE_ROOT, "font\\helvetica-normal.ttf"),
-    "AdobeSongStd-Light": os.path.join(SOURCE_ROOT, "font\\AdobeSongStd-Light.otf"),
+    "arial": {
+        "file": os.path.join(SOURCE_ROOT, "font\\arial.xml"), "line_height": 0.66748046875,
+        "units_per_em": 2048, "flags": "00001000 00011011", "font_bbox": ['-1361', '-665', '4096', '2129'],
+        "italic_angle": 0, "ascent": 1854, "descent": -434, "cap_height": 1467, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 904, "max_char_width": 904, "first_char": 0, "last_char": 255,
+        "x_height": 1062, "missing_width": 452,
+    },
+    "ariali": {
+        "file": os.path.join(SOURCE_ROOT, "font\\ariali.xml"), "line_height": 0.67041015625,
+        "units_per_em": 2048, "flags": "00001000 00011001", "font_bbox": ['-1059', '-665', '2783', '2043'],
+        "italic_angle": -12.0, "ascent": 1854, "descent": -434, "cap_height": 1466, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 904, "max_char_width": 904, "first_char": 0, "last_char": 255,
+        "x_height": 1062, "missing_width": 452,
+    },
+    "helvetica": {
+        "file": os.path.join(SOURCE_ROOT, "font\\helvetica.xml"), "line_height": 0.60986328125,
+        "units_per_em": 2048, "flags": "00000000 00011111", "font_bbox": ['-76', '-461', '1976', '1946'],
+        "italic_angle": 0.0, "ascent": 1577, "descent": -471, "cap_height": 1469, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 1079, "max_char_width": 1079, "first_char": 0, "last_char": 255,
+        "x_height": 1071, "missing_width": 539,
+    },
+    "calibri": {
+        "file": os.path.join(SOURCE_ROOT, "font\\calibri.xml"), "line_height": 0.720703125,
+        "units_per_em": 2048, "flags": "00000000 00011001", "font_bbox": ['-1030', '-640', '2540', '2102'],
+        "italic_angle": 0.0, "ascent": 1536, "descent": -512, "cap_height": 1294, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 1067, "max_char_width": 1067, "first_char": 0, "last_char": 255,
+        "x_height": 951, "missing_width": 533,
+    },
+    "calibril": {
+        "file": os.path.join(SOURCE_ROOT, "font\\calibril.xml"), "line_height": 0.720703125,
+        "units_per_em": 2048, "flags": "00000000 00011011", "font_bbox": ['-1047', '-550', '2680', '1950'],
+        "italic_angle": 0.0, "ascent": 1536, "descent": -512, "cap_height": 1294, "font_weight": 300,
+        "stemv": 71, "avg_char_width": 1065, "max_char_width": 1065, "first_char": 0, "last_char": 255,
+        "x_height": 946, "missing_width": 532,
+    },
+    "calibrii": {
+        "file": os.path.join(SOURCE_ROOT, "font\\calibrii.xml"), "line_height": 0.720703125,
+        "units_per_em": 2048, "flags": "00000000 00011001", "font_bbox": ['-1484', '-565', '2580', '2102'],
+        "italic_angle": -11.0, "ascent": 1536, "descent": -512, "cap_height": 1297, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 1067, "max_char_width": 1067, "first_char": 0, "last_char": 255,
+        "x_height": 957, "missing_width": 533,
+    },
+    "times": {
+        "file": os.path.join(SOURCE_ROOT, "font\\times.xml"), "line_height": 0.62744140625,
+        "units_per_em": 2048, "flags": "00001000 00011001", "font_bbox": ['-1164', '-628', '4190', '2129'],
+        "italic_angle": 0.0, "ascent": 1825, "descent": -443, "cap_height": 1356, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 821, "max_char_width": 821, "first_char": 0, "last_char": 255,
+        "x_height": 916, "missing_width": 410,
+    },
+    "micross": {
+        "file": os.path.join(SOURCE_ROOT, "font\\micross.xml"), "line_height": 0.64892578125,
+        "units_per_em": 2048, "flags": "00000000 00011011", "font_bbox": ['-1188', '-526', '3017', '2055'],
+        "italic_angle": 0.0, "ascent": 1888, "descent": -430, "cap_height": 1466, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 901, "max_char_width": 901, "first_char": 0, "last_char": 255,
+        "x_height": 1061, "missing_width": 450,
+    },
 }
 
 
@@ -45,21 +94,23 @@ COLOR_PALETTE: dict = {
 
 PAGE_SIZE: dict = {
     "a3": (842, 1191),
-    "a4": (595, 842),
+    "a4": (595, 842),  # pixels/points at 72 ppi
     "a5": (420, 595),
     "b5": (516, 729),
     "letter": (612, 792),
     "legal": (612, 1008),
 }
 
-ALIGN: List[str] = [
-    "left_top", "middle_top", "right_top",
-    "left_center", "middle_center", "right_center",
-    "left_bottom", "middle_bottom", "right_bottom",
+VALIGN: List[str] = [
+    "bottom", "center", "top",
+]
+
+HALIGN: List[str] = [
+    "left", "middle", "right",
 ]
 
 UNIT: Mapping[str, Union[int, float]] = {
-    "cm": 0.393701, "inch": 1.0, "mm": 0.0393701, "point": 1, "pt": 1
+    "cm": 0.393701, "inch": 1.0, "mm": 0.0393701, "point": 1, "pt": 1,
 }
 
 LINE_STYLE: Mapping[str, Union[int, float]] = {
