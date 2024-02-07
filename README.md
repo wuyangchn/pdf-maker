@@ -4,6 +4,8 @@ A module for creating PDF files manually.
 ## Example usage:
 
 ### v0.0.3: Plot scatters and lines and write text based on a coordinate system
+
+view the pdf generated in this example: [pdf](tests/myPDF.pdf)
     
     import numpy as np
     import pdf_maker as pm
@@ -61,4 +63,3 @@ A module for creating PDF files manually.
     # save pdf
     file.save()
 
-    
