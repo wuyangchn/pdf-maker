@@ -93,6 +93,9 @@ class Obj:
         self._differences = []
         self._horizontal_scale = 1
         self._units_per_em = 2048
+        self._font_file = ""  # identifier of the font file stream object
+        self._font_file_hex = ""
+        self._font_file_bytes = b""
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -102,6 +105,9 @@ class Obj:
 
         self._data = ""
         self._stream = ""
+
+        # self._font_name = "EWGWZO+" + "Arial"
+        # self._basefont = "EWGWZO+" + "Arial"
 
         if self.get_type() == "FontDescriptor":
             font = FONT_LIB.get(str(self._font_name).lower())
@@ -120,6 +126,14 @@ class Obj:
             self._x_height = font["x_height"]
             self._missing_width = font["missing_width"]
 
+        if self.get_type() == "FontFileStream":
+            file = FONT_LIB.get(str(self._font_name).lower())['ttf_file']
+            self._font_file_bytes = open(file, 'rb').read()
+            hex_stream = self._font_file_bytes.hex()
+            self._font_file_hex = "\n".join(
+                [hex_stream[i * 100: (i + 1) * 100] for i in range(len(hex_stream) // 100)] + [hex_stream[-(len(hex_stream) % 100):]])
+            self._font_file_hex += ">"
+
         if self.get_type() == "Font" or self.get_type() == "Encoding":
             font = FONT_LIB.get(str(self._basefont or self._font_name).lower())
             tree = ElementTree.parse(font['file'])
@@ -135,7 +149,7 @@ class Obj:
             self._differences = []
             for map_obj in map_objs:
                 chars.update({int(map_obj.attrib.get("code"), 16): {"name": map_obj.attrib.get("name")}})
-                self._differences.append(f"{int(map_obj.attrib.get('code'), 16)} /{map_obj.attrib.get('name')}")
+                # self._differences.append(f"{int(map_obj.attrib.get('code'), 16)} /{map_obj.attrib.get('name')}")
 
             chars_list = [(code, str(char['name']), str(self._missing_width), "0") for code, char in chars.items()]
             chars_list = sorted(chars_list, key=lambda x: x[0])
@@ -171,17 +185,17 @@ class Obj:
 
     def data(self):
         data = f"{self.index()} 0 obj\n{self._prefix}\n" \
-               f"<<\n{self.type()}{self.kids()}" \
+               f"<<\n{self.type()}{self.kids()}{self.filter()}" \
                f"{self.parent()}{self.mediabox()}{self.contents()}{self.resources()}" \
                f"{self.length()}{self.subtype()}{self.name()}{self.first_char()}{self.last_char()}" \
                f"{self.widths()}{self.base_encoding()}{self.differences()}" \
                f"{self.basefont()}{self.encoding()}{self.pages()}{self.font_descriptor()}" \
                f"{self.title()}{self.author()}{self.producer()}{self.creator()}" \
-               f"{self.font_bbox()}{self.font_name()}{self.flags()}{self.ascent()}{self.descent()}" \
+               f"{self.font_bbox()}{self.font_file()}{self.font_name()}{self.flags()}{self.ascent()}{self.descent()}" \
                f"{self.cap_height()}{self.italic_angle()}{self.stemv()}{self.missing_width()}" \
                f"{self.creation_date()}{self.mod_date()}{self.subject()}{self.keywords()}" \
                f">>\n" \
-               f"{self.stream()}" \
+               f"{self.stream()}{self.font_file_stream()}" \
                f"endobj\n"
         self._data = data
         return data
@@ -246,14 +260,17 @@ class Obj:
         resources = self._resources.code()
         return self._base_attr("/Resources", f"<<\n{resources}>>")
 
-    def length(self, length: int = None):
-        if self.get_type() != "Stream":
-            return ""
-        if length is not None:
-            self._length = str(length)
-        if not str(self._length).isdigit():
-            return ""
-        return self._base_attr("/Length", f"{self._length} 0 R")
+    def length(self):
+        if self.get_type() == "Stream":
+            if not str(self._length).isdigit():
+                return ""
+            return self._base_attr("/Length", f"{self._length} 0 R")
+        if self.get_type() == "FontFileStream":
+            return f"/Length {len(self._font_file_hex)}\n" \
+                   f"/Length1 {len(self._font_file_bytes)}\n" \
+                   f"{'/Length2' if self._subtype == 'Type 1' else ''}  {len(self._font_file_bytes) if self._subtype == 'Type 1' else ''}\n" \
+                   f"{'/Length3' if self._subtype == 'Type 1' else ''}  {len(self._font_file_bytes) if self._subtype == 'Type 1' else ''}\n"  # This should be wrong
+        return ""
 
     def subtype(self, subtype: str = None):
         if self.get_type() != "Font":
@@ -428,6 +445,14 @@ class Obj:
             self._font_bbox = font_bbox
         return f"/FontBBox [{' '.join([str(i) for i in self._font_bbox])}]\n"
 
+    def font_file(self):
+        if self.get_type() != "FontDescriptor":
+            return ""
+        return self._base_attr(
+            f"/FontFile{'' if self._subtype == 'Type 1' else '2' if self._subtype == 'TrueType' else '3'}",
+            self._font_file, True
+        )
+
     def flags(self, flags: Union[int, str] = None):
         if self.get_type() != "FontDescriptor":
             return ""
@@ -484,6 +509,11 @@ class Obj:
             self._missing_width = missing_width
         return self._base_attr("/MissingWidth", self._missing_width)
 
+    def filter(self):
+        if self.get_type() != "FontFileStream":
+            return ""
+        return self._base_attr("/Filter", "/ASCIIHexDecode")
+
     def stream(self):
         if self.get_type() != "Stream":
             return ""
@@ -491,6 +521,11 @@ class Obj:
         code = '\n'.join([obj.code() for obj in contents])
         self._stream = code
         return f"stream\n{code}\nendstream\n"
+
+    def font_file_stream(self):
+        if self.get_type() != "FontFileStream":
+            return ""
+        return f"stream\n{self._font_file_hex}\nendstream\n"
 
     """ Functions """
     def text(self, text: Text):

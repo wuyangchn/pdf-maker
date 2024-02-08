@@ -26,6 +26,7 @@ class BaseContent:
         self._height = height
         self._z_index = z_index
         self._h_align: str = "left"
+        self._v_align: str = "bottom"
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -51,6 +52,12 @@ class BaseContent:
             self._x = self._x - self._width / 2
         elif self._h_align == "right":
             self._x = self._x - self._width
+        if self._v_align == "bottom":
+            pass
+        elif self._v_align == "center":
+            self._y = self._y - self._height / 2
+        elif self._v_align == "top":
+            self._y = self._y - self._height
 
 
 class Text(BaseContent):
@@ -85,6 +92,7 @@ class Text(BaseContent):
                 text_in_lines.append("")
             text_in_lines[-1] = text_in_lines[-1] + text[0]
         self._width = max([sum([self.get_char_width(char) for char in text]) for text in text_in_lines])
+        self._height = self.get_char_width("M")
         self._align()
         self._code = f"BT\n{self._x} {self._y} Td\n" + "\n".join([f"/{self._font_name} {self.size(script)} Tf\n{color} rg\n{color} RG\n{self.Ts(script)} Ts\n{f'0 -{self.get_line_height()} Td' if r == 'r' else ''}\n({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
         return self._code

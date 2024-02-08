@@ -54,20 +54,27 @@ class NewPDF:
             self.page_size = PAGE_SIZE.get(self.page_size.lower(), (595, 842))
 
         # font name should be capitalized
-        font = "Arial".capitalize()
+        # font = "Times New Roman"
+        # font = "Adobe Sans MM"
+        # font = "ArialMT"
+        font = "Arial"
         # default obj: catalog
         self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages
         self.add_obj(obj=Obj(type="Pages", index="2", kids=[]))
         # default obj: font
-        self.add_obj(obj=Obj(type="Font", index="3", subtype="Type1", name="F1", basefont=font,
-                             encoding="4", font_descriptor="5", horizontal_scale=0.5))
+        self.add_obj(obj=Obj(type="Font", index="3", subtype=FONT_LIB[font.lower()]["type"],
+                             name="F1", basefont=font, encoding="4", font_descriptor="5",
+                             horizontal_scale=0.5))
         # Encoding
         self.add_obj(obj=Obj(type="Encoding", index="4", font_name=font))
         # fontDescriptor
-        self.add_obj(obj=Obj(type="FontDescriptor", index="5", font_name=font))
+        self.add_obj(obj=Obj(type="FontDescriptor", index="5", font_name=font, font_file="6",
+                             subtype=FONT_LIB[font.lower()]["type"], base_encoding="WinAnsiEncoding"))
+        # font file stream
+        self.add_obj(obj=Obj(type="FontFileStream", index="6", font_name=font))
         # default obj: info
-        self.add_obj(obj=Obj(type="Info", index="6", title=self.title, author=self.author,
+        self.add_obj(obj=Obj(type="Info", index="7", title=self.title, author=self.author,
                              producer=self.producer, creator=self.creator))
 
     def del_obj(self, index: int):

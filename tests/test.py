@@ -108,22 +108,18 @@ def test_export_pdf_from_ararpy():
         end = pt.scale_to_points(xaxis.min, yaxis.min + yaxis.interval * i)
         end = (start[0] - 5, end[1])
         pt.line(start=start, end=end, width=1, line_style="solid", clip=False, coordinate="pt")
+        pt.text(x=end[0] - 5, y=end[1], text=f"{yaxis.min + yaxis.interval * i}", clip=False,
+                coordinate="pt", h_align="right", v_align="center")
 
     file = pm.NewPDF(filepath="export_from_ararpy.pdf")
     # as default, an empty pdf will have no page
     file.add_page()
-    file.text(page=1, x=200, y=800, size=6, text=f"M", h_align="middle")
-    file.text(page=1, x=200, y=780, size=8, text=f"M", h_align="middle")
-    file.text(page=1, x=200, y=760, size=10, text=f"M", h_align="middle")
-    file.text(page=1, x=200, y=740, size=12, text=f"M", h_align="middle")
-    file.text(page=1, x=200, y=720, size=14, text=f"M", h_align="middle")
-    file.text(page=1, x=200, y=700, size=16, text=f"M", h_align="middle")
-    file.text(page=1, x=200, y=680, size=18, text=f"M", h_align="middle")
+    file.text(page=0, x=300, y=780, line_space=1.2, size=24, base=0, h_align="middle",
+              text=f"This is a demo of creating pdf with PDF-Maker."
+                   f"<r><sup>40</sup>Ar/<sup>39</sup>Ar <red>Inverse Isochron</red>")
 
     file.canvas(page=1, margin_top=7, canvas=cv, unit="cm", h_align="middle")
 
-    for i in range(0, 5):
-        file.line(page=1, start=(i * 100, 0), end=(i * 100, 800), width=0.5, color="grey", line_style="solid")
     # save pdf
     file.save()
 
