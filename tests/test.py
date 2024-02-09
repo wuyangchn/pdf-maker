@@ -141,8 +141,6 @@ def test_export_pdf_from_ararpy():
 
 def test_rotate():
     file = pm.NewPDF(filepath="test-subset.pdf")
-    # as default, an empty pdf will have no page
-    file.add_page()
 
     file.text(page=0, x=100, y=200, line_space=1, size=12, base=0, rotate=0,
               h_align="left", v_align="bottom", text=f"This is a string")
@@ -178,7 +176,6 @@ def test_rotate():
     file.text(page=0, x=400, y=400, line_space=1, size=12, base=0, rotate=120, h_align="middle", v_align="center",
               text=f"Inverse Isochron MMM")
 
-
     for i in range(6):
         file.line(page=1, start=(i*100, 0), end=(i*100, 860), width=0.5)
 
@@ -191,8 +188,19 @@ def test_rotate():
     # print(file.content_str)
 
 
+def test_font():
+    basefont = "times"
+    file = pm.NewPDF(filepath="test-font.pdf", _basefont=basefont)
+    file.text(page=1, x=50, y=700, line_space=1, size=16, rotate=0,
+              h_align="left", v_align="bottom", text=f"file:///D:/PythonProjects/pdf-maker/tests/test-font.pdf")
+
+    # save pdf
+    file.save()
+
+
 if __name__ == "__main__":
     # test_export_pdf_from_ararpy()
-    test_rotate()
+    # test_rotate()
+    test_font()
 
     pass

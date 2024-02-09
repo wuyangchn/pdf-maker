@@ -185,7 +185,7 @@ class Obj:
 
     def data(self):
         data = f"{self.index()} 0 obj\n{self._prefix}\n" \
-               f"<<\n{self.type()}{self.kids()}{self.filter()}" \
+               f"<<\n{self.type()}{self.kids()}{self.count()}{self.filter()}" \
                f"{self.parent()}{self.mediabox()}{self.contents()}{self.resources()}" \
                f"{self.length()}{self.subtype()}{self.name()}{self.first_char()}{self.last_char()}" \
                f"{self.basefont()}{self.encoding()}{self.font_descriptor()}{self.widths()}" \
@@ -232,7 +232,14 @@ class Obj:
         for kid in kids:
             self._kids.append(kid)
         kids = ' '.join([f"{i} 0 R" for i in self._kids])
-        return f"/Kids [{kids}]\n/Count {len(self._kids)}\n"
+        return f"/Kids [{kids}]\n"
+
+    def count(self, count: int = None):
+        if self.get_type() != "Pages":
+            return ""
+        if count is None:
+            count = len(self._kids)
+        return f"/Count {count}\n"
 
     def parent(self, parent: int = None):
         if self.get_type() != "Page":

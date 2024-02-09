@@ -2,6 +2,12 @@
 # 2024-02-09 v0.0.35
 * Add multiply fonts to pages. 
 * TrueType fonts like Arial are displayed well now, but Type 1 font don't work well.
+Possible reason: comparing extracted font file by pdf-parser.py from the pdf and the source file times.ttf,
+it is found that extracted font file lost some information. Times ttf might be not TrueType font.
+
+![alt text](image.png)
+
+![alt text](image-1.png)
 
 # 2024-02-09 v0.0.34
 * Try to solve the embedding issue, some potential problems found: length calculation of the font file 

@@ -33,6 +33,7 @@ class NewPDF:
         self._header = "%PDF-1.7\n"
         self._body = ""
         self._font_names: List[str] = []  # not the actual name of fonts, but indexes such as F0, F1, ...
+        self._basefont = "helvetica"
 
         self.title = "NewPDF"
         self.author = "Yang"
@@ -58,29 +59,17 @@ class NewPDF:
         # font = "Times"
         # font = "AdobeSansMM"
         # font = "Arial"
-        self._basefont = "helvetica"
-        basefont_subtype = FONT_LIB[self._basefont.lower()]["type"]
         # default obj: catalog
         self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages
         self.add_obj(obj=Obj(type="Pages", index="2", kids=[]))
+        # default obj: info
+        self.add_obj(obj=Obj(type="Info", index="3", title=self.title, author=self.author,
+                             producer=self.producer, creator=self.creator))
         # create font object
         self.add_font(name=self._basefont, width_scale=0.5, embed=True)
-        # # default obj: font
-        # self._font_names.append(f"F{len(self._font_names)}")
-        # self.add_obj(obj=Obj(type="Font", index="3", subtype=basefont_subtype, name=self._font_names[-1],
-        #                      basefont=self._basefont, encoding="4", font_descriptor="5", width_scale=0.5))
-        # # Encoding
-        # self.add_obj(obj=Obj(type="Encoding", index="4", font_name=self._basefont, base_encoding="WinAnsiEncoding"))
-        # # fontDescriptor
-        # self.add_obj(obj=Obj(type="FontDescriptor", index="5", font_name=self._basefont, font_file="6",
-        #                      subtype=basefont_subtype))
-        # # font file stream
-        # self.add_obj(obj=Obj(type="FontFileStream", index="6", font_name=self._basefont))
-
-        # default obj: info
-        self.add_obj(obj=Obj(type="Info", index="7", title=self.title, author=self.author,
-                             producer=self.producer, creator=self.creator))
+        # as default, an empty pdf will have no page
+        self.add_page()
 
     def del_obj(self, index: int):
         for obj in self._objs:
