@@ -99,8 +99,8 @@ class BaseContent:
 
 class Text(BaseContent):
     def __init__(self, font_name, size, text, font, **options):
-        self._font_name = font_name  # font name defined in page resources
-        self._font = font
+        self._font_name = font_name  # font name defined in page resources, like F0, F1, ...
+        self._font = font  # real font name, lick Arial, Times, ...
         self._size = size
         self._text = text
         self._sub_size = int(self._size * 2. / 3.)

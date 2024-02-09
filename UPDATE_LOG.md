@@ -1,4 +1,15 @@
 
+# 2024-02-09 v0.0.35
+* Add multiply fonts to pages. 
+* TrueType fonts like Arial are displayed well now, but Type 1 font don't work well.
+
+# 2024-02-09 v0.0.34
+* Try to solve the embedding issue, some potential problems found: length calculation of the font file 
+stream.
+* A javascript module named [fontsubset](https://github.com/flashlizi/fontsubset) can be used to extract 
+subset from a full font file so the size of pdf with embedded font files can be decreased. 
+Usage: fontsubset -s "String containing characters might be included" fontFile outputFile
+
 # 2024-02-08 v0.0.33
 * Add rotation attribute for text item (might also work for other items like rect).
 * Change the priorities of three rich text tags, now color > super/subscript > break. That means

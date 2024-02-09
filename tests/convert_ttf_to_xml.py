@@ -166,8 +166,20 @@ print(len(c))
 d = c.decode(encoding="latin-1")
 print(d)
 
+with open("sub-font-jr.ttf", "wb") as f:
+    f.write(c)
 
-file = "arial.ttf"
+
+file = r"D:\PythonProjects\pdf-maker\pdf_maker\resources\subset\arial-subset.ttf"
 font_file_bytes = open(file, 'rb').read()
-font_file_hex = font_file_bytes.hex() + ">"
+font_file_hex = font_file_bytes.hex()
+
+font_file_hex = "\n".join(
+    [font_file_hex[i * 64: (i + 1) * 64] for i in range(len(font_file_hex) // 64)] + [font_file_hex[-(len(font_file_hex) % 64):]])
+font_file_hex += ">\n"
+import os
+filesize = os.path.getsize(file)
+print(filesize)
+print(len(font_file_bytes))
+print(len(font_file_hex))
 

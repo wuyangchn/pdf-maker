@@ -32,6 +32,7 @@ class NewPDF:
         self._crf: Crf = ...
         self._header = "%PDF-1.7\n"
         self._body = ""
+        self._font_names: List[str] = []  # not the actual name of fonts, but indexes such as F0, F1, ...
 
         self.title = "NewPDF"
         self.author = "Yang"
@@ -54,25 +55,29 @@ class NewPDF:
             self.page_size = PAGE_SIZE.get(self.page_size.lower(), (595, 842))
 
         # font name should be capitalized
-        # font = "Times New Roman"
-        # font = "Adobe Sans MM"
-        # font = "ArialMT"
-        font = "Arial"
+        # font = "Times"
+        # font = "AdobeSansMM"
+        # font = "Arial"
+        self._basefont = "helvetica"
+        basefont_subtype = FONT_LIB[self._basefont.lower()]["type"]
         # default obj: catalog
         self.add_obj(obj=Obj(type="Catalog", index="1", pages="2"))
         # default obj: pages
         self.add_obj(obj=Obj(type="Pages", index="2", kids=[]))
-        # default obj: font
-        self.add_obj(obj=Obj(type="Font", index="3", subtype=FONT_LIB[font.lower()]["type"],
-                             name="F1", basefont=font, encoding="4", font_descriptor="5",
-                             horizontal_scale=0.5))
-        # Encoding
-        self.add_obj(obj=Obj(type="Encoding", index="4", font_name=font))
-        # fontDescriptor
-        self.add_obj(obj=Obj(type="FontDescriptor", index="5", font_name=font, font_file="6",
-                             subtype=FONT_LIB[font.lower()]["type"], base_encoding="WinAnsiEncoding"))
-        # font file stream
-        self.add_obj(obj=Obj(type="FontFileStream", index="6", font_name=font))
+        # create font object
+        self.add_font(name=self._basefont, width_scale=0.5, embed=True)
+        # # default obj: font
+        # self._font_names.append(f"F{len(self._font_names)}")
+        # self.add_obj(obj=Obj(type="Font", index="3", subtype=basefont_subtype, name=self._font_names[-1],
+        #                      basefont=self._basefont, encoding="4", font_descriptor="5", width_scale=0.5))
+        # # Encoding
+        # self.add_obj(obj=Obj(type="Encoding", index="4", font_name=self._basefont, base_encoding="WinAnsiEncoding"))
+        # # fontDescriptor
+        # self.add_obj(obj=Obj(type="FontDescriptor", index="5", font_name=self._basefont, font_file="6",
+        #                      subtype=basefont_subtype))
+        # # font file stream
+        # self.add_obj(obj=Obj(type="FontFileStream", index="6", font_name=self._basefont))
+
         # default obj: info
         self.add_obj(obj=Obj(type="Info", index="7", title=self.title, author=self.author,
                              producer=self.producer, creator=self.creator))
@@ -100,6 +105,13 @@ class NewPDF:
 
     def add_page(self, contents_index: Union[int, str] = None, size: Union[tuple, list, str] = None,
                  resources: Resources = None, unit: str = "pt"):
+
+        def _add_stream():
+            _stream = self.add_obj(type="Stream", text=[])  # stream must be created firstly
+            _length = self.add_obj(type="StreamLength", prefix="")
+            _stream._length = _length.index()
+            return _stream
+
         if isinstance(size, (tuple, list)):
             size = (size[0] * UNIT[unit] * self.ppi, size[1] * UNIT[unit] * self.ppi)
         if size is None:
@@ -107,21 +119,52 @@ class NewPDF:
         if isinstance(size, str):
             size = PAGE_SIZE.get(size, (595, 842))
         if resources is None:
-            font = self.get_obj(type="Font")[0]
-            resources = Resources(font=font._name, font_index=font.index(), procset="[/PDF /Text]")
+            fonts = self.get_obj(type="Font")
+            font_names = [font._name for font in fonts]
+            font_indexes = [font.index() for font in fonts]
+            resources = Resources(fonts=font_names, font_indexes=font_indexes, procset="[/PDF /Text]")
         if contents_index is None:
-            stream = self.add_stream()
+            stream = _add_stream()
         else:
             stream = self.get_obj(index=str(contents_index))
         pages_index = self.get_obj(type="Pages")[0].index()
         return self.add_obj(type="Page", parent=f"{pages_index}", contents=f"{stream.index()}",
                             mediabox=[0, 0, *size], resources=resources)
 
-    def add_stream(self):
-        stream = self.add_obj(type="Stream", text=[])  # stream must be created firstly
-        length = self.add_obj(type="StreamLength", prefix="")
-        stream._length = length.index()
-        return stream
+    def add_font(self, name: str, width_scale: Union[float, int] = 1, embed: bool = True):
+        """
+        Args:
+            name:
+            width_scale:
+            embed:
+
+        Returns:
+
+        """
+        font_subtype = FONT_LIB[name.lower()]["type"]
+        # Encoding
+        encoding = self.add_obj(type="Encoding", font_name=name, base_encoding="WinAnsiEncoding")
+        # font file stream
+        font_file_index = ""
+        if embed:
+            font_file = self.add_obj(type="FontFileStream", font_name=name)
+            font_file_index = font_file.index()
+        # fontDescriptor
+        font_descriptor = self.add_obj(type="FontDescriptor", font_name=name,
+                                       font_file=font_file_index, subtype=font_subtype)
+        self._font_names.append(f"F{len(self._font_names)}")
+        # default obj: font
+        font = self.add_obj(type="Font", subtype=font_subtype, name=self._font_names[-1],
+                            basefont=name, width_scale=width_scale, encoding=encoding.index(),
+                            font_descriptor=font_descriptor.index())
+        # add font to all pages
+        page_objs = self.get_obj(type="Page")
+        fonts = self.get_obj(type="Font")
+        font_names = [font._name for font in fonts]
+        font_indexes = [font.index() for font in fonts]
+        for page in page_objs:
+            page._resources = Resources(fonts=font_names, font_indexes=font_indexes, procset="[/PDF /Text]")
+        return font
 
     def get_obj(self, type: str = None, index: Union[str, int] = None):
         """
@@ -194,12 +237,13 @@ class NewPDF:
         page = [obj for obj in self._objs if obj.get_type() == "Page"][index]
         page.page_size((width, height))
 
-    def text(self, page: int, x: int, y: int, text: str, size: int = 12, base: int = 1, **options):
-        text = Text(font_name="", size=size, x=x, y=y, text=text, font="", **options)
+    def text(self, page: int, x: int, y: int, text: str, size: int = 12, base: int = 1, font: str = "", **options):
+        if font == "": font = self._basefont  # real font name
+        font_obj = next(filter(lambda obj: obj._basefont == font, self.get_obj(type="Font")))  # font obj
+        text = Text(font_name=font_obj._name, size=size, x=x, y=y, text=text, font=font_obj._basefont, **options)
         page = self.get_page(index=page, base=base)
-        font = self.get_obj(type="Font")[0]
         contents_page = self.get_obj(index=page.get_contents_index())
-        contents_page.text(self._add_font_info_to_text(text, font, page))
+        contents_page.text(self._add_font_info_to_text(text, font_obj, page))
         return text
 
     def line(self, page: int, start: Union[list, tuple], end: Union[list, tuple], width: Union[float, int] = None,
@@ -328,14 +372,14 @@ class NewPDF:
                 bottom = (page.page_size()[1] - canvas.height()) / 2
         # reset the position of the canvas
         canvas.left_bottom((left, bottom))
-        # get font obj
-        font = self.get_obj(type="Font")[0]
         # get content object of this page
         contents_obj = self.get_obj(index=page.get_contents_index())
         for comp in canvas.all_components():
             # print(comp.name())
             # print(type(comp))
             if isinstance(comp, Text):
+                # get font obj
+                font = next(filter(lambda obj: obj._basefont == comp._font, self.get_obj(type="Font")))
                 contents_obj.text(self._add_font_info_to_text(text=comp, font=font, page=page))
             if isinstance(comp, Rect):
                 contents_obj.rect(comp)
@@ -348,10 +392,13 @@ class NewPDF:
     @staticmethod
     def _add_font_info_to_text(text: Text, font: Obj, page: Obj):
         # widths of 256 ASCII characters
-        font_widths = dict(zip(list(range(0, 256)), [int(font._widths[i]) for i in range(256)]))
+        char_range = range(font._last_char, font._last_char + 1)
+        font_widths = dict(zip(list(char_range), [int(font._widths[i]) for i in list(range(len(font._widths)))]))
         # other information
-        text._font_name = page.get_font_name()
-        text._font = font.get_basefont()
+        if text._font_name == "":
+            text._font_name = page.get_font_name()
+        if text._font == "":
+            text._font = font.get_basefont()
         text._font_widths = font_widths
         text._units_per_em = font._units_per_em
         return text
