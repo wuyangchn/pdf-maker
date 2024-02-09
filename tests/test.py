@@ -85,14 +85,21 @@ def test_export_pdf_from_ararpy():
     plot_scale = (xaxis.min, xaxis.max, yaxis.min, yaxis.max)
 
     # create a canvas
-    cv = pm.Canvas(width=17, height=12, unit="cm", show_frame=True, frame_line_width=1, clip_outside_plot_areas=False)
-    pt = cv.add_plot_area(name="Plot1", plot_area=(0.1, 0.1, 0.85, 0.85), plot_scale=plot_scale, show_frame=True)
+    cv = pm.Canvas(width=17, height=12, unit="cm", show_frame=True, clip_outside_plot_areas=False)
+    # change frame outline style
+    cv.show_frame(color="grey", line_width=0.5)
+    pt = cv.add_plot_area(name="Plot1", plot_area=(0.15, 0.15, 0.8, 0.8), plot_scale=plot_scale, show_frame=True)
 
+    # isochron scatters
     data = ap.calc.arr.transpose(plot.data)
-
     for (x, sx, y, sy, r, i) in data:
         pt.scatter(x, y, fill_color="red" if (i-1) in set1.data else "blue" if (i-1) in set2.data else "white", size=2)
 
+    # isochron line
+    line1: list = plot.line1.data
+    pt.line(start=line1[0], end=line1[1], clip=True, width=1, color='red')
+
+    # split sticks
     xaxis.interval = (xaxis.max - xaxis.min) / xaxis.split_number
     yaxis.interval = (yaxis.max - yaxis.min) / yaxis.split_number
     for i in range(xaxis.split_number + 1):
@@ -102,7 +109,6 @@ def test_export_pdf_from_ararpy():
         pt.line(start=start, end=end, width=1, line_style="solid", clip=False, coordinate="pt")
         pt.text(x=start[0], y=end[1] - 15, text=f"{xaxis.min + xaxis.interval * i}", clip=False,
                 coordinate="pt", h_align="middle")
-
     for i in range(yaxis.split_number + 1):
         start = pt.scale_to_points(*(xaxis.min, yaxis.min + yaxis.interval * i))
         end = pt.scale_to_points(xaxis.min, yaxis.min + yaxis.interval * i)
@@ -111,36 +117,73 @@ def test_export_pdf_from_ararpy():
         pt.text(x=end[0] - 5, y=end[1], text=f"{yaxis.min + yaxis.interval * i}", clip=False,
                 coordinate="pt", h_align="right", v_align="center")
 
+    # axis titles
+    p = pt.scale_to_points((xaxis.max + xaxis.min) / 2,  yaxis.min)
+    pt.text(x=p[0], y=p[1] - 30, text=f"<sup>39</sup>Ar<sub>K</sub>/<sup>40</sup>Ar*",
+            clip=False, coordinate="pt", h_align="middle", v_align="top")
+    p = pt.scale_to_points(xaxis.min, (yaxis.max + yaxis.min) / 2)
+    pt.text(x=p[0] - 50, y=p[1], text=f"<sup>36</sup>Ar<sub>a</sub>/<sup>40</sup>Ar*",
+            clip=False, coordinate="pt", h_align="middle", v_align="bottom", rotate=90)
+
     file = pm.NewPDF(filepath="export_from_ararpy.pdf")
     # as default, an empty pdf will have no page
     file.add_page()
+    # rich text tags should follow this priority: color > script > break
     file.text(page=0, x=300, y=780, line_space=1.2, size=24, base=0, h_align="middle",
-              text=f"This is a demo of creating pdf with PDF-Maker."
-                   f"<r><sup>40</sup>Ar/<sup>39</sup>Ar <red>Inverse Isochron</red>")
+              text=f"This is a demo of creating pdf with <red>PDF-Maker</red>."
+                   f"<r><sup>40</sup>Ar/<sup>39</sup>Ar Inverse Isochron")
 
     file.canvas(page=1, margin_top=7, canvas=cv, unit="cm", h_align="middle")
 
     # save pdf
     file.save()
 
-    print(file.content_str)
 
-
-def empty_page():
-
-    file = pm.NewPDF(filepath="export_from_ararpy.pdf")
+def test_rotate():
+    file = pm.NewPDF(filepath="test.pdf")
     # as default, an empty pdf will have no page
     file.add_page()
 
-    file.text(page=1, x=200, y=800, size=6, text=f"M")
-    file.text(page=1, x=200, y=780, size=8, text=f"M")
+    file.text(page=0, x=300, y=700, line_space=1.2, size=12, base=0, h_align="left",
+              text=f"<red>AB<sub>CD</sub></red>")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=0, h_align="left", v_align="top",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=90,
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=45, v_align="center",
+              text=f"Inverse Isochron MMM")
+
+
+    file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=30, h_align="middle", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=400, y=400, line_space=1, size=12, base=0, rotate=60, h_align="middle", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=90, h_align="middle", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=400, y=400, line_space=1, size=12, base=0, rotate=120, h_align="middle", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+
+    for i in range(6):
+        file.line(page=1, start=(i*100, 0), end=(i*100, 860), width=0.5)
+
+    for i in range(9):
+        file.line(page=1, start=(0, i*100), end=(595, i*100), width=0.5)
+
+    # save pdf
     file.save()
 
-    print(file.content_str)
+    # print(file.content_str)
 
 
 if __name__ == "__main__":
-    test_export_pdf_from_ararpy()
-
+    # test_export_pdf_from_ararpy()
+    test_rotate()
 
     pass

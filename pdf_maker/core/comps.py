@@ -14,6 +14,7 @@ from fontTools.ttLib import TTFont
 from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
 from typing import Tuple, Union, List, Mapping
 from xml.etree import ElementTree
+from math import sin, cos, pi as PI, acos, asin
 
 
 class BaseContent:
@@ -27,6 +28,7 @@ class BaseContent:
         self._z_index = z_index
         self._h_align: str = "left"
         self._v_align: str = "bottom"
+        self._rotate: int = 0
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -45,19 +47,54 @@ class BaseContent:
     def z_index(self):
         return self._z_index
 
-    def _align(self):
-        if self._h_align == "left":
-            pass
-        elif self._h_align == "middle":
-            self._x = self._x - self._width / 2
-        elif self._h_align == "right":
-            self._x = self._x - self._width
-        if self._v_align == "bottom":
-            pass
-        elif self._v_align == "center":
-            self._y = self._y - self._height / 2
-        elif self._v_align == "top":
-            self._y = self._y - self._height
+    def align(self):
+        self._x, self._y = self._align(self._x, self._y, self._h_align,
+                                       self._v_align, self._width, self._height, self._rotate)
+
+    @staticmethod
+    def _align(x, y, h_align, v_align, width, height, rotate):
+        """
+        This function is used to set actual position of the left_bottom.
+            For example, align(x=5, y=10, h_align='middle', v_align='center', width=10, height=10, rotate=0),
+                will return (2.5 = 5 - 5 / 2, 5 = 10 - 10 / 2), which is the position of the left bottom.
+                The left bottom position is required by pdf sepc to draw the item.
+        Args:
+            x: target position x, e.g., 3 in this example
+            y: target position y, e.g., 5 in this example
+            h_align: horizontal alignment, means the x is at left, middle, or right
+            v_align: vertical alignment, means the y is at bottom, center, or top
+            width: total width of the item
+            height: total height of the item
+            rotate: rotate degree integer between 0 to 360
+
+        Returns:
+
+        """
+        if v_align == "bottom":
+            height = 0
+        elif v_align == "center":
+            height = height / 2
+        elif v_align == "top":
+            height = height
+        else:
+            raise ValueError(f"Vertical alignment must be bottom, center, or top, but got {v_align} instead.")
+        if h_align == "left":
+            width = 0
+        elif h_align == "middle":
+            width = width / 2
+        elif h_align == "right":
+            width = width
+        else:
+            raise ValueError(f"Horizontal alignment must be left, middle, or right, but got {h_align} instead.")
+
+        l = (width ** 2 + height ** 2) ** .5
+        if l == 0:
+            return x, y
+        b = asin(height / l)
+        a = int(rotate) / 180 * PI
+        x = x - l * cos(a + b)
+        y = y - l * sin(a + b)
+        return x, y
 
 
 class Text(BaseContent):
@@ -76,6 +113,7 @@ class Text(BaseContent):
         self._font_widths: Mapping[int, int] = ...
         self._units_per_em: int = 2048
         self._dpi = 96    # points per inch, usually 72
+        self._rotate = 0
 
         super().__init__(**options)
 
@@ -91,10 +129,21 @@ class Text(BaseContent):
             if text[3] == "r":
                 text_in_lines.append("")
             text_in_lines[-1] = text_in_lines[-1] + text[0]
-        self._width = max([sum([self.get_char_width(char) for char in text]) for text in text_in_lines])
-        self._height = self.get_char_width("M")
-        self._align()
-        self._code = f"BT\n{self._x} {self._y} Td\n" + "\n".join([f"/{self._font_name} {self.size(script)} Tf\n{color} rg\n{color} RG\n{self.Ts(script)} Ts\n{f'0 -{self.get_line_height()} Td' if r == 'r' else ''}\n({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
+        # line_height = self.get_char_width("M")
+        line_height = int(FONT_LIB.get(self._font.lower())['line_height'] * self._size) * self._line_space
+        line_width = max([sum([self.get_char_width(char) for char in text]) for text in text_in_lines])
+        self._width = line_width
+        self._height = line_height
+        angle = PI * int(self._rotate) / 180
+        self.align()
+        pos = f'{round(cos(angle), 2)} {round(sin(angle), 2)} {round(-sin(angle), 2)} {round(cos(angle), 2)} ' \
+              f'{round(self._x, 6)} {round(self._y, 6)}'
+        self._code = f"BT\n{pos} Tm\n" + "\n".join([
+            f"/{self._font_name} {self.size(script)} Tf\n"
+            f"{color} rg\n{color} RG\n"
+            f"{self.Ts(script)} Ts\n"
+            f"{f'0 -{self.get_line_height()} Td' if r == 'r' else ''}\n"
+            f"({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
         return self._code
 
     def get_line_height(self):
@@ -123,8 +172,11 @@ class Text(BaseContent):
         return 0
 
     def read_rich_text(self, text):
-        rich_text_list = self.read_script(text)
-        rich_text_list = [(color[0], script[1], color[1]) for script in rich_text_list for color in self.read_color(script[0])]
+        # rich_text_list = self.read_script(text)
+        # rich_text_list = [(color[0], script[1], color[1]) for script in rich_text_list for color in self.read_color(script[0])]
+        # rich_text_list = [(r[0], script, color, r[1]) for (item, script, color) in rich_text_list for r in self.read_break(item)]
+        rich_text_list = self.read_color(text)
+        rich_text_list = [(script[0], script[1], color) for (item, color) in rich_text_list for script in self.read_script(item)]
         rich_text_list = [(r[0], script, color, r[1]) for (item, script, color) in rich_text_list for r in self.read_break(item)]
         return rich_text_list
 
@@ -132,19 +184,19 @@ class Text(BaseContent):
         for name, value in COLOR_PALETTE.items():
             if rich_text.startswith(f"<{name}>") and rich_text.endswith(f"</{name}>"):
                 return [(rich_text.removeprefix(f"<{name}>").removesuffix(f"</{name}>"), ' '.join([str(i) for i in value]))]
-
             if f"<{name}>" in rich_text and f"</{name}>" in rich_text:
                 reg = f"(<{name}>.*?</{name}>)"
                 text_list = re.split(reg, rich_text)
                 return [i for item in text_list for i in self.read_color(item)]
-
         return [(rich_text, ' '.join([str(i) for i in self._color]))]
 
     def read_script(self, rich_text):
         if rich_text.startswith("<sub>") and rich_text.endswith("</sub>"):
-            return [(rich_text.removeprefix("<sub>").removesuffix("</sub>"), "sub")]
+            if not self._is_rich_text(rich_text.removeprefix("<sub>").removesuffix("</sub>")):
+                return [(rich_text.removeprefix("<sub>").removesuffix("</sub>"), "sub")]
         if rich_text.startswith("<sup>") and rich_text.endswith("</sup>"):
-            return [(rich_text.removeprefix("<sup>").removesuffix("</sup>"), "sup")]
+            if not self._is_rich_text(rich_text.removeprefix("<sup>").removesuffix("</sup>")):
+                return [(rich_text.removeprefix("<sup>").removesuffix("</sup>"), "sup")]
         if "<sub>" in rich_text and "</sub>" in rich_text:
             text_list = re.split(r"(<sub>.*?</sub>)", rich_text)
             return [i for item in text_list for i in self.read_script(item)]
@@ -158,6 +210,13 @@ class Text(BaseContent):
             text = rich_text.split("<r>")
             return [(text[0], ""), (text[1], "r")]
         return [(rich_text, "")]
+
+    @staticmethod
+    def _is_rich_text(text: str):
+        for reg in [r"(<sup>.*?</sup>)", r"(<sub>.*?</sub>)"]:
+            if len(re.findall(reg, text)) > 0:
+                return True
+        return False
 
     @staticmethod
     def to_chr(code: str):

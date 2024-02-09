@@ -1,4 +1,18 @@
 
+# 2024-02-08 v0.0.33
+* Add rotation attribute for text item (might also work for other items like rect).
+* Change the priorities of three rich text tags, now color > super/subscript > break. That means
+<red>AB<sub>CD</sub><r>EF<red> is allowed, but AB<sub><red>CD</red></sub> will be not displayed correctly.
+And these tags should not separate others, like <red><sub>CD</red></sub>, which will be displayed wrong.
+
+# 2024-02-08 v0.0.32
+* Try to embed font files into the Font Descriptor objects. 
+[This answer](https://stackoverflow.com/a/76125971/22143697) show an example of embedding font files, 
+his pdf works well in Adobe Acrobat. But I failed to do this, still trying to fine why.
+* For reference, [This answer](https://stackoverflow.com/a/3489099/22143697) introduced how to extract
+font info from a pdf file. 
+* This issue haven't been solve.
+
 # 2024-02-07 v0.0.31
 * Fix font issue, currently Arial font works well, Adobe can successfully recognize the texts,
 but other fonts may not work for Adobe Acrobat. Adobe Illustrator can work well for all fonts.
