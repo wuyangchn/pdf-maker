@@ -570,7 +570,7 @@ class Obj:
             self._bytes_length = len(code)
             code.decode()
         if self._filter == "ASCIIHexDecode":
-            code = "".join([char.encode().hex()[:2] for char in code])
+            code = "".join([char.encode().hex()[-2:] for char in code])
             code = "\n".join(
                 [code[i * 64: (i + 1) * 64] for i in range(len(code) // 64)] + [code[len(code) // 64 * 64:]])
         self._stream = code

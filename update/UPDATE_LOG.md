@@ -2,8 +2,8 @@
 * Issue found: plus-minus sign cannot be displayed correctly.
 
 This issue seems to be caused by the encode procedure, for example, the character "±" (unicode 00B1) will
-be converted to b'\xc2\xb1' with encode('utf-8'). To solve this problem using a filter to encode texts might 
-work.
+be converted to b'\xc2\xb1' with encode('utf-8'). Thus I found only characters between 0 to 127 in ASCII set 
+can be displayed correctly.
     
     s = "=±=≤"
     for i in s:

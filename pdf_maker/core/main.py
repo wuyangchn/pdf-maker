@@ -292,9 +292,9 @@ class NewPDF:
             obj._offset = (self.header() + body).encode('utf-8').find(f"{obj.index()} 0 obj".encode('utf-8'))
             obj._number = "00000"
             obj._state = "n"
+            # set lengths for stream object after getting the stream
             if obj.get_type() == "Stream" and obj.length() != "":
                 self.get_obj(index=obj._length)._prefix = obj._bytes_length
-                # self.get_obj(index=obj._length)._prefix = len(obj._stream.encode('utf-8'))
         self._body = body
         return self._body
 
