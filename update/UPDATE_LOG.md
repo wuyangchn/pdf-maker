@@ -1,3 +1,5 @@
+# 2024-02-10 v0.0.41
+* Revise setup.py, fixed the issue of missing resource files.
 
 # 2024-02-10 v0.0.40
 * Fix text wrapping error
