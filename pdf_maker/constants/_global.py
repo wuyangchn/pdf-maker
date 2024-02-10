@@ -43,8 +43,8 @@ FONT_LIB = {
     },
     "times".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font\\times.xml"),
-        # "ttf_file": os.path.join(SOURCE_ROOT, "subset\\times-subset.ttf"),
-        "ttf_file": os.path.join(SOURCE_ROOT, "font\\times.ttf"),
+        "ttf_file": os.path.join(SOURCE_ROOT, "subset\\times-subset.ttf"),
+        # "ttf_file": os.path.join(SOURCE_ROOT, "font\\times.ttf"),
         "type": "TrueType",
         "line_height": 0.62744140625,
         "units_per_em": 2048,
@@ -57,8 +57,8 @@ FONT_LIB = {
     },
     "AdobeSansMM".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font\\micross.xml"),
-        # "ttf_file": os.path.join(SOURCE_ROOT, "subset\\micross-subset.ttf"),
-        "ttf_file": os.path.join(SOURCE_ROOT, "font\\micross.ttf"),
+        "ttf_file": os.path.join(SOURCE_ROOT, "subset\\micross-subset.ttf"),
+        # "ttf_file": os.path.join(SOURCE_ROOT, "font\\micross.ttf"),
         "type": "TrueType",
         "line_height": 0.64892578125,
         "units_per_em": 2048,

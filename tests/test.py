@@ -200,7 +200,7 @@ def test_font():
 
 if __name__ == "__main__":
     # test_export_pdf_from_ararpy()
-    # test_rotate()
-    test_font()
+    test_rotate()
+    # test_font()
 
     pass

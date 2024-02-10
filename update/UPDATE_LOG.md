@@ -1,3 +1,29 @@
+# 2024-02-10 v0.0.36
+* Fix the error of embedding fonts.
+
+Source font file size:
+
+![alt text](image-2.png)
+
+Extracted font file size:
+
+![alt text](image-3.png)
+
+There is a difference of 4 bytes. The extracted file missed four charachters. So the issue might happen during the hex encoding procedure.
+
+![alt text](image-4.png)
+
+Furtherly, it is noticed that the difference happens after the realignment of the hexadecimal representation, in which errors might happen.
+
+![alt text](image-5.png)
+
+Finally identify the issue: should be len(hex_stream) // 64 instead of that + 1.
+
+![alt text](image-6.png)
+
+Three fonts are all embedded.
+
+![alt text](image-7.png)
 
 # 2024-02-09 v0.0.35
 * Add multiply fonts to pages. 

@@ -1,6 +1,13 @@
 # PDF-Maker
 A module for creating PDF files manually.
 
+## Update log
+
+[Update log](/update/UPDATE_LOG.md)
+
+**2024-02-10 v0.0.36**
+* Fix the error of embedding fonts.
+
 ## Example usage:
 
 ### v0.0.3: Plot scatters and lines and write text based on a coordinate system

@@ -170,7 +170,7 @@ class Obj:
             hex_stream = self._font_file_bytes.hex()
             # separate stream based on fixed width
             self._font_file_hex = "\n".join(
-                [hex_stream[i * 64: (i + 1) * 64] for i in range(len(hex_stream) // 64)] + [hex_stream[(len(hex_stream) // 64 + 1) * 64:]])
+                [hex_stream[i * 64: (i + 1) * 64] for i in range(len(hex_stream) // 64)] + [hex_stream[len(hex_stream) // 64 * 64:]])
             self._font_file_hex += ">\n"
 
     def get_type(self):
