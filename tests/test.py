@@ -69,7 +69,7 @@ def test_create_a_pdf():
     file.save()
 
 
-def test_export_pdf_from_ararpy():
+def case2():
 
     # open ararpy files
     file_path = r'D:\PythonProjects\pdf-maker\venv\Lib\site-packages\ararpy\examples\22WHA0433.arr'
@@ -125,7 +125,7 @@ def test_export_pdf_from_ararpy():
     pt.text(x=p[0] - 50, y=p[1], text=f"<sup>36</sup>Ar<sub>a</sub>/<sup>40</sup>Ar*",
             clip=False, coordinate="pt", h_align="middle", v_align="bottom", rotate=90)
 
-    file = pm.NewPDF(filepath="export_from_ararpy.pdf")
+    file = pm.NewPDF(filepath="case2.pdf")
     # as default, an empty pdf will have no page
     file.add_page()
     # rich text tags should follow this priority: color > script > break
@@ -187,66 +187,66 @@ def test_rotate():
     # print(file.content_str)
 
 
-def test_font():
+def case1():
     basefont = "ArialMT"
-    file = pm.NewPDF(filepath="test-font.pdf", _basefont=basefont)
+    file = pm.NewPDF(filepath="case1.pdf", _basefont=basefont)
 
     # the below two texts will use default basefont of the page, which is ArialMT
     file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0,
-              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
+              h_align="left", v_align="bottom", text=f"=±=+><123456 {chr(0xb1)}  {chr(0x007B)} {chr(0x0040)} {chr(0x2264)} {chr(0x2265)} {chr(0x007D)} Test Font Embeding")
 
-    file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
-              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
-
-    font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
-
-    file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
-
-    file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
-
-    font_obj = file.add_font(name="MicrosoftSansSerif", width_scale=0.5, embed=True)
-
-    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-          h_align="left", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=30, font=font_obj._basefont,
-          h_align="left", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=60, font=font_obj._basefont,
-          h_align="left", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=90, font=font_obj._basefont,
-          h_align="left", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=120, font=font_obj._basefont,
-          h_align="left", v_align="center", text="This is a rotated text")
-
-    font_obj = file.add_font(name="TimesNewRomanPSMT", width_scale=0.5, embed=True)
-
-    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-          h_align="middle", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=30, font=font_obj._basefont,
-          h_align="middle", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=60, font=font_obj._basefont,
-          h_align="middle", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=90, font=font_obj._basefont,
-          h_align="middle", v_align="center", text="This is a rotated text")
-
-    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=120, font=font_obj._basefont,
-          h_align="middle", v_align="center", text="This is a rotated text")
+    # file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
+    #           h_align="left", v_align="bottom", text=f"123456 {chr(0xb1)} Test Font Embeding")
+    #
+    # font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
+    #
+    # file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+    #           h_align="left", v_align="bottom", text=f"123456 {chr(0xb1)} Test Font Embeding")
+    #
+    # file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+    #           h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
+    #
+    # font_obj = file.add_font(name="MicrosoftSansSerif", width_scale=0.5, embed=True)
+    #
+    # file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+    #       h_align="left", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=30, font=font_obj._basefont,
+    #       h_align="left", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=60, font=font_obj._basefont,
+    #       h_align="left", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=90, font=font_obj._basefont,
+    #       h_align="left", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=120, font=font_obj._basefont,
+    #       h_align="left", v_align="center", text="This is a rotated text")
+    #
+    # font_obj = file.add_font(name="TimesNewRomanPSMT", width_scale=0.5, embed=True)
+    #
+    # file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+    #       h_align="middle", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=30, font=font_obj._basefont,
+    #       h_align="middle", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=60, font=font_obj._basefont,
+    #       h_align="middle", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=90, font=font_obj._basefont,
+    #       h_align="middle", v_align="center", text="This is a rotated text")
+    #
+    # file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=120, font=font_obj._basefont,
+    #       h_align="middle", v_align="center", text="This is a rotated text")
 
     # save pdf
     file.save()
 
 
 if __name__ == "__main__":
-    # test_export_pdf_from_ararpy()
+    # case2()
     # test_rotate()
-    test_font()
+    case1()
 
     pass

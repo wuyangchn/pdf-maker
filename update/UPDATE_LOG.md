@@ -1,3 +1,36 @@
+# 2024-02-10 v0.0.39
+* Issue found: plus-minus sign cannot be displayed correctly.
+
+This issue seems to be caused by the encode procedure, for example, the character "±" (unicode 00B1) will
+be converted to b'\xc2\xb1' with encode('utf-8'). To solve this problem using a filter to encode texts might 
+work.
+    
+    s = "=±=≤"
+    for i in s:
+        print(i.encode('utf-8'))
+        
+    b'='
+    b'\xc2\xb1'  # this is converted by "±" but will convert to "Â±".
+    b'='
+    b'\xe2\x89\xa4'  # this is converted by "≤" but will convert to "â\x89¤".
+    
+    # for example:
+    s = "±"
+    s.encode('utf-8')
+    # b'\xc2\xb1'
+    b'\xc2\xb1'.decode('utf-8')
+    # "±"
+    # Up to here, everything is good, however if convert bytes to hexadecimal representation, errors happed
+    b'\xc2\xb1'.hex()
+    # 'c2b1'
+    #  convert bytes to charaters, will give chr(0xc2) and chr(0xb1) 
+    # delete the first two digits, i.e., only 'b1' left, then display "±" well.   
+
+Now we can successfully write the symbol "±", but fail to display other characters in Unicode set with longer 
+codes, such as "≤" (unicode 8804). Currently I dont exactly know how to completely solve this issue, and I tried
+to use ASCII85Decode but not helpful. I'll evaluate if it is necessary to search deeper to find the perfect 
+solution to support more Unicode characters.
+    
 # 2024-02-10 v0.0.38
 * Fix the display error of double quotation marks, which was missed in the subset font files.
 

@@ -47,6 +47,7 @@ class Resources:
 class Obj:
     def __init__(self, index, type, **options):
         self._prefix: str = ""
+        self._filter: str = ""
         self._pages: str = ""
         self._basefont = ""
         self._name = ""  # font name, like F0, F1, ...
@@ -104,6 +105,7 @@ class Obj:
 
         self._data = ""
         self._stream = ""
+        self._bytes_length = ""
 
         # define variables used in fontdescriptor object
         if self.get_type() == "FontDescriptor":
@@ -154,6 +156,7 @@ class Obj:
             # self._missing_width = self._avg_char_width  # missing width always missed in font files
 
         # define variables used in font object
+        # if self.get_type() == "Font" or self.get_type() == "Encoding":
         if self.get_type() == "Font":
             font = FONT_LIB.get(str(self._basefont or self._font_name).lower())
             tree = ElementTree.parse(font['file'])
@@ -549,17 +552,29 @@ class Obj:
         return self._base_attr("/MissingWidth", self._missing_width)
 
     def filter(self):
-        if self.get_type() != "FontFileStream":
-            return ""
-        return self._base_attr("/Filter", "/ASCIIHexDecode")
+        if self.get_type() == "FontFileStream":
+            self._filter = "ASCIIHexDecode"
+        if self.get_type() == "Stream":
+            self._filter = "ASCIIHexDecode"
+        return self._base_attr("/Filter", f"/{self._filter}")
 
     def stream(self):
         if self.get_type() != "Stream":
             return ""
         contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter], key=lambda obj: obj.z_index())
         code = '\n'.join([obj.code() for obj in contents])
+        self._bytes_length = len(code.encode())
+        if self._filter == "ASCII85Decode":
+            import base64
+            code = base64.a85encode(code.encode('utf-8'))
+            self._bytes_length = len(code)
+            code.decode()
+        if self._filter == "ASCIIHexDecode":
+            code = "".join([char.encode().hex()[:2] for char in code])
+            code = "\n".join(
+                [code[i * 64: (i + 1) * 64] for i in range(len(code) // 64)] + [code[len(code) // 64 * 64:]])
         self._stream = code
-        return f"stream\n{code}\nendstream\n"
+        return f"stream\n{self._stream}\nendstream\n"
 
     def font_file_stream(self):
         if self.get_type() != "FontFileStream":

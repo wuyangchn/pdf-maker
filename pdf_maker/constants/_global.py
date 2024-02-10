@@ -20,7 +20,9 @@ FONT_LIB = {
     # Note the names should be postScriptName, such as ArialMT not Arial
     "ArialMT".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
-        "ttf_file": os.path.join(SOURCE_ROOT, "subset\\arial-subset.ttf"),
+        # "ttf_file": os.path.join(SOURCE_ROOT, "font\\arial.ttf"),
+        # "ttf_file": os.path.join(SOURCE_ROOT, "subset\\arial-subset.ttf"),
+        "ttf_file": os.path.join(SOURCE_ROOT, "arial.ttf"),
         "type": "TrueType",
         "line_height": 0.66748046875,
         "units_per_em": 2048,

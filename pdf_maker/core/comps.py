@@ -174,9 +174,6 @@ class Text(BaseContent):
         return 0
 
     def read_rich_text(self, text):
-        # rich_text_list = self.read_script(text)
-        # rich_text_list = [(color[0], script[1], color[1]) for script in rich_text_list for color in self.read_color(script[0])]
-        # rich_text_list = [(r[0], script, color, r[1]) for (item, script, color) in rich_text_list for r in self.read_break(item)]
         rich_text_list = self.read_color(text)
         rich_text_list = [(script[0], script[1], color) for (item, color) in rich_text_list for script in self.read_script(item)]
         rich_text_list = [(r[0], script, color, r[1]) for (item, script, color) in rich_text_list for r in self.read_break(item)]
