@@ -142,16 +142,37 @@ def test_export_pdf_from_ararpy():
 def test_rotate():
     file = pm.NewPDF(filepath="test-subset.pdf")
 
+    file.text(page=0, x=200, y=700, line_space=1, size=12, base=0, rotate=0, h_align="left", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=200, y=725, line_space=1, size=12, base=0, rotate=0, h_align="middle", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=200, y=750, line_space=1, size=12, base=0, rotate=0, h_align="right", v_align="center",
+              text=f"Inverse Isochron MMM")
+
     file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=30, h_align="middle", v_align="center",
               text=f"Inverse Isochron MMM")
 
-    file.text(page=0, x=400, y=400, line_space=1, size=12, base=0, rotate=60, h_align="middle", v_align="center",
+    file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=60, h_align="middle", v_align="center",
               text=f"Inverse Isochron MMM")
 
     file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=90, h_align="middle", v_align="center",
               text=f"Inverse Isochron MMM")
 
-    file.text(page=0, x=400, y=400, line_space=1, size=12, base=0, rotate=120, h_align="middle", v_align="center",
+    file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=120, h_align="middle", v_align="center",
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=30,
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=60,
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=90,
+              text=f"Inverse Isochron MMM")
+
+    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=120,
               text=f"Inverse Isochron MMM")
 
     for i in range(6):
@@ -172,42 +193,52 @@ def test_font():
 
     # the below two texts will use default basefont of the page, which is ArialMT
     file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
 
     file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
 
     font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
 
     file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
 
     file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+              h_align="left", v_align="bottom", text="123456 ± Test Font Embeding")
 
     font_obj = file.add_font(name="MicrosoftSansSerif", width_scale=0.5, embed=True)
 
-    file.text(page=0, x=20, y=300, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+          h_align="left", v_align="center", text="This is a rotated text")
 
-    file.text(page=0, x=20, y=350, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=30, font=font_obj._basefont,
+          h_align="left", v_align="center", text="This is a rotated text")
+
+    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=60, font=font_obj._basefont,
+          h_align="left", v_align="center", text="This is a rotated text")
+
+    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=90, font=font_obj._basefont,
+          h_align="left", v_align="center", text="This is a rotated text")
+
+    file.text(page=0, x=120, y=500, line_space=1, size=12, base=0, rotate=120, font=font_obj._basefont,
+          h_align="left", v_align="center", text="This is a rotated text")
 
     font_obj = file.add_font(name="TimesNewRomanPSMT", width_scale=0.5, embed=True)
 
-    file.text(page=0, x=20, y=400, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+          h_align="middle", v_align="center", text="This is a rotated text")
 
-    file.text(page=0, x=20, y=450, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=30, font=font_obj._basefont,
+          h_align="middle", v_align="center", text="This is a rotated text")
 
-    font_obj = file.add_font(name="Helvetica", width_scale=0.5, embed=True)
+    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=60, font=font_obj._basefont,
+          h_align="middle", v_align="center", text="This is a rotated text")
 
-    file.text(page=0, x=20, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=90, font=font_obj._basefont,
+          h_align="middle", v_align="center", text="This is a rotated text")
 
-    file.text(page=0, x=20, y=550, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=300, y=500, line_space=1, size=12, base=0, rotate=120, font=font_obj._basefont,
+          h_align="middle", v_align="center", text="This is a rotated text")
 
     # save pdf
     file.save()

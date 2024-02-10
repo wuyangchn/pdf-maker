@@ -98,7 +98,7 @@ class BaseContent:
 
 
 class Text(BaseContent):
-    def __init__(self, font_name, size, text, font, **options):
+    def __init__(self, font_name, size, text, font: str, **options):
         self._font_name = font_name  # font name defined in page resources, like F0, F1, ...
         self._font = font  # real font name, lick Arial, Times, ...
         self._size = size
@@ -136,6 +136,8 @@ class Text(BaseContent):
         self._height = line_height
         angle = PI * int(self._rotate) / 180
         self.align()
+        # pos = f'{round(cos(angle), 2)} {round(sin(angle), 2)} {round(-sin(angle), 2)} {round(cos(angle), 2)} ' \
+        #       f'{round(self._x, 6)} {round(self._y, 6)}'
         pos = f'{round(cos(angle), 2)} {round(sin(angle), 2)} {round(-sin(angle), 2)} {round(cos(angle), 2)} ' \
               f'{round(self._x, 6)} {round(self._y, 6)}'
         self._code = f"BT\n{pos} Tm\n" + "\n".join([

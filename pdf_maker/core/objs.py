@@ -50,6 +50,7 @@ class Obj:
         self._pages: str = ""
         self._basefont = ""
         self._name = ""  # font name, like F0, F1, ...
+        self._font_name = ""  # actual name, like ArialMT, MicrosoftSansSerif
         self._index: int = index
         self._type: str = type
         self._kids: List[str] = []
@@ -74,7 +75,6 @@ class Obj:
         self._offset: Union[str, int] = ""
         self._number: Union[str, int] = ""
         self._state: str = "n"
-        self._font_name = ""
         self._encoding = ""
         self._base_encoding = "WinAnsiEncoding"  # "MacRomanEncoding", "MacExpertEncoding", or "WinAnsiEncoding"
         self._font_bbox = [-166, -225, 1000, 931]

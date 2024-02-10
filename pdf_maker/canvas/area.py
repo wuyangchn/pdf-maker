@@ -116,7 +116,7 @@ class Area:
         self._show_frame = False
         self.del_component(comp=self.get_comp(comp_name="__CanvasFrame"))
 
-    def text(self, x: int, y: int, text: str, size: int = 12, font: str = "Arial", **options):
+    def text(self, x: int, y: int, text: str, size: int = 12, font: str = "", **options):
         text = Text(font_name="", size=size, x=x, y=y, text=text, font=font, **options)
         self._components.append(text)
         return text

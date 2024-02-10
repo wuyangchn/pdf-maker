@@ -228,11 +228,11 @@ class NewPDF:
 
     def text(self, page: int, x: int, y: int, text: str, size: int = 12, base: int = 1, font: str = "", **options):
         if font == "": font = self._basefont  # real font name
-        font_obj = next(filter(lambda obj: obj._basefont == font, self.get_obj(type="Font")))  # font obj
-        text = Text(font_name=font_obj._name, size=size, x=x, y=y, text=text, font=font_obj._basefont, **options)
-        page = self.get_page(index=page, base=base)
+        text = self._add_font_info_to_text(
+            text=Text(font_name="", size=size, x=x, y=y, text=text, font=font, **options))
+        page = self.get_page(index=page, base=base)  # page object
         contents_page = self.get_obj(index=page.get_contents_index())
-        contents_page.text(self._add_font_info_to_text(text, font_obj, page))
+        contents_page.text(text)  # add text component to the content object
         return text
 
     def line(self, page: int, start: Union[list, tuple], end: Union[list, tuple], width: Union[float, int] = None,
@@ -367,9 +367,7 @@ class NewPDF:
             # print(comp.name())
             # print(type(comp))
             if isinstance(comp, Text):
-                # get font obj
-                font = next(filter(lambda obj: obj._basefont == comp._font, self.get_obj(type="Font")))
-                contents_obj.text(self._add_font_info_to_text(text=comp, font=font, page=page))
+                contents_obj.text(self._add_font_info_to_text(text=comp))
             if isinstance(comp, Rect):
                 contents_obj.rect(comp)
             if isinstance(comp, Scatter):
@@ -378,16 +376,24 @@ class NewPDF:
                 contents_obj.line(comp)
         pass
 
-    @staticmethod
-    def _add_font_info_to_text(text: Text, font: Obj, page: Obj):
-        # widths of 256 ASCII characters
-        char_range = range(font._last_char, font._last_char + 1)
-        font_widths = dict(zip(list(char_range), [int(font._widths[i]) for i in list(range(len(font._widths)))]))
-        # other information
+    def _add_font_info_to_text(self, text: Text):
+        """
+        Set font information for a Text component, based on the font defined in the Text instance
+        Args:
+            text: Text instance
+        Returns:
+
+        """
+        # get font object based on the font attribute of the text, text._font
+        if text._font.lower() not in FONT_LIB.keys():
+            text._font = self._basefont  # real font name, like ArialMT, do not use index name such as F1.
+        # font obj
+        font: Obj = next(filter(lambda obj: obj._basefont == text._font, self.get_obj(type="Font")))
         if text._font_name == "":
-            text._font_name = page.get_font_name()
-        if text._font == "":
-            text._font = font.get_basefont()
+            text._font_name = font._name  # font index name, like F0, F1, ...
+        # get widths of 256 ASCII characters
+        char_range = range(font._first_char, font._last_char + 1)
+        font_widths = dict(zip(list(char_range), [int(i) for i in font._widths]))
         text._font_widths = font_widths
         text._units_per_em = font._units_per_em
         return text
