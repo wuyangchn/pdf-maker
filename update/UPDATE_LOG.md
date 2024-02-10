@@ -1,3 +1,6 @@
+# 2024-02-10 v0.0.42
+* Fix the issue of font file path error in Ubuntu system.
+
 # 2024-02-10 v0.0.41
 * Revise setup.py, fixed the issue of missing resource files.
 
