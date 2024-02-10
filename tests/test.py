@@ -142,28 +142,6 @@ def test_export_pdf_from_ararpy():
 def test_rotate():
     file = pm.NewPDF(filepath="test-subset.pdf")
 
-    file.text(page=0, x=100, y=200, line_space=1, size=12, base=0, rotate=0,
-              h_align="left", v_align="bottom", text=f"This is a string")
-
-    file.text(page=0, x=100, y=300, line_space=1, size=24, base=0, rotate=0,
-              h_align="left", v_align="bottom", text=f"This is a string")
-
-    font_obj = file.add_font(name="AdobeSansMM", width_scale=0.5, embed=True)
-
-    file.text(page=0, x=100, y=400, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text=f"This is a string")
-
-    file.text(page=0, x=100, y=500, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text=f"This is a string")
-
-    font_obj = file.add_font(name="Times", width_scale=0.5, embed=True)
-
-    file.text(page=0, x=100, y=600, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text=f"This is a string")
-
-    file.text(page=0, x=100, y=700, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text=f"This is a string")
-
     file.text(page=0, x=300, y=400, line_space=1, size=12, base=0, rotate=30, h_align="middle", v_align="center",
               text=f"Inverse Isochron MMM")
 
@@ -189,10 +167,39 @@ def test_rotate():
 
 
 def test_font():
-    basefont = "times"
+    basefont = "Arial"
     file = pm.NewPDF(filepath="test-font.pdf", _basefont=basefont)
-    file.text(page=1, x=50, y=700, line_space=1, size=16, rotate=0,
-              h_align="left", v_align="bottom", text=f"file:///D:/PythonProjects/pdf-maker/tests/test-font.pdf")
+
+    # # the below two texts will use default basefont of the page, which is ArialMT
+    # file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0,
+    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    #
+    # file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
+    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    #
+    # font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
+    #
+    # file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    #
+    # file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    #
+    # font_obj = file.add_font(name="Microsoft Sans Serif", width_scale=0.5, embed=True)
+    #
+    # file.text(page=0, x=20, y=400, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    #
+    # file.text(page=0, x=20, y=500, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    font_obj = file.add_font(name="Times New Roman", width_scale=0.5, embed=True)
+
+    file.text(page=0, x=20, y=600, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    file.text(page=0, x=20, y=700, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
 
     # save pdf
     file.save()
@@ -200,7 +207,7 @@ def test_font():
 
 if __name__ == "__main__":
     # test_export_pdf_from_ararpy()
-    test_rotate()
-    # test_font()
+    # test_rotate()
+    test_font()
 
     pass

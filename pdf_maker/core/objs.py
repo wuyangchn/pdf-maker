@@ -123,6 +123,36 @@ class Obj:
             self._x_height = font["x_height"]
             self._missing_width = font["missing_width"]
 
+            # tree = ElementTree.parse(font['file'])
+            # root = tree.getroot()
+            # head_obj = root.find('head')
+            # hhea_obj = root.find('hhea')
+            # OS_2_obj = root.find('OS_2')
+            # post_obj = root.find('post')
+            # self._flags = head_obj.find("flags").attrib['value']
+            # xMin = head_obj.find("xMin").attrib['value']
+            # yMin = head_obj.find("yMin").attrib['value']
+            # xMax = head_obj.find("xMax").attrib['value']
+            # yMax = head_obj.find("yMax").attrib['value']
+            # self._font_bbox = [xMin, yMin, xMax, yMax]
+            # self._italic_angle = post_obj.find("italicAngle").attrib['value']
+            # # self._ascent = OS_2_obj.find("sTypoAscender").attrib['value']
+            # # self._descent = OS_2_obj.find("sTypoDescender").attrib['value']
+            # self._ascent = hhea_obj.find("ascent").attrib['value']
+            # self._descent = hhea_obj.find("descent").attrib['value']
+            # self._cap_height = OS_2_obj.find("sCapHeight").attrib['value']
+            # self._font_weight = OS_2_obj.find("usWeightClass").attrib['value']
+            # # The possible values of font weight are 100, 200, 300, 400, 500, 600, 700, 800, or 900
+            # self._stemv = int(10 + 220 * (int(OS_2_obj.find("usWeightClass").attrib['value']) - 50) / 900)
+            #
+            # self._avg_char_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
+            # self._max_char_width = OS_2_obj.find("xAvgCharWidth").attrib['value']
+            # self._first_char = OS_2_obj.find("usFirstCharIndex").attrib['value']
+            # self._last_char = OS_2_obj.find("usLastCharIndex").attrib['value']
+            # self._x_height = OS_2_obj.find("sxHeight").attrib['value']
+            #
+            # self._missing_width = self._avg_char_width  # missing width always missed in font files
+
         # define variables used in font object
         if self.get_type() == "Font":
             font = FONT_LIB.get(str(self._basefont or self._font_name).lower())

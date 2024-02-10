@@ -30,10 +30,10 @@ class NewPDF:
         self._objs: List[Obj] = []
         self._pages = []
         self._crf: Crf = ...
-        self._header = "%PDF-1.7\n"
+        self._header = "%PDF-1.7\n%âãÏÓ\n"
         self._body = ""
         self._font_names: List[str] = []  # not the actual name of fonts, but indexes such as F0, F1, ...
-        self._basefont = "helvetica"
+        self._basefont = "ArialMT"  # Note the names should be postScriptName, such as ArialMT not Arial
 
         self.title = "NewPDF"
         self.author = "Yang"

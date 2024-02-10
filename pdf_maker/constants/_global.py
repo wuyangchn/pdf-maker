@@ -17,6 +17,19 @@ SOURCE_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resource
 
 
 FONT_LIB = {
+    # Note the names should be postScriptName, such as ArialMT not Arial
+    "ArialMT".lower(): {
+        "file": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
+        "ttf_file": os.path.join(SOURCE_ROOT, "subset\\arial-subset.ttf"),
+        "type": "TrueType",
+        "line_height": 0.66748046875,
+        "units_per_em": 2048,
+        "flags": "32",
+        "font_bbox": ['-1361', '-665', '4096', '2129'],
+        "italic_angle": 0, "ascent": 1854, "descent": -434, "cap_height": 1467, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 904, "max_char_width": 904, "first_char": 0, "last_char": 255,
+        "x_height": 1062, "missing_width": 452,
+    },
     "Arial".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font\\arial.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset\\arial-subset.ttf"),
@@ -29,7 +42,20 @@ FONT_LIB = {
         "stemv": 95, "avg_char_width": 904, "max_char_width": 904, "first_char": 0, "last_char": 255,
         "x_height": 1062, "missing_width": 452,
     },
-    "helvetica": {
+    "Calibri".lower(): {
+        "file": os.path.join(SOURCE_ROOT, "font\\calibri.xml"),
+        # "ttf_file": os.path.join(SOURCE_ROOT, "subset\\arial-subset.ttf"),
+        "ttf_file": os.path.join(SOURCE_ROOT, "font\\calibri.ttf"),
+        "type": "TrueType",
+        "line_height": 0.66748046875,
+        "units_per_em": 2048,
+        "flags": "32",
+        "font_bbox": ['-1361', '-665', '4096', '2129'],
+        "italic_angle": 0, "ascent": 1854, "descent": -434, "cap_height": 1467, "font_weight": 400,
+        "stemv": 95, "avg_char_width": 904, "max_char_width": 904, "first_char": 0, "last_char": 255,
+        "x_height": 1062, "missing_width": 452,
+    },
+    "Helvetica": {
         "file": os.path.join(SOURCE_ROOT, "font\\helvetica.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset\\helvetica-subset.ttf"),
         "type": "TrueType",
@@ -41,7 +67,7 @@ FONT_LIB = {
         "stemv": 95, "avg_char_width": 1079, "max_char_width": 1079, "first_char": 0, "last_char": 255,
         "x_height": 1071, "missing_width": 539,
     },
-    "times".lower(): {
+    "Times New Roman".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font\\times.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset\\times-subset.ttf"),
         # "ttf_file": os.path.join(SOURCE_ROOT, "font\\times.ttf"),
@@ -55,7 +81,7 @@ FONT_LIB = {
         "stemv": 95, "avg_char_width": 821, "max_char_width": 821, "first_char": 0, "last_char": 255,
         "x_height": 916, "missing_width": 410,
     },
-    "AdobeSansMM".lower(): {
+    "Microsoft Sans Serif".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font\\micross.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset\\micross-subset.ttf"),
         # "ttf_file": os.path.join(SOURCE_ROOT, "font\\micross.ttf"),
