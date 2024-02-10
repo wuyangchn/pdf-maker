@@ -167,39 +167,47 @@ def test_rotate():
 
 
 def test_font():
-    basefont = "Arial"
+    basefont = "ArialMT"
     file = pm.NewPDF(filepath="test-font.pdf", _basefont=basefont)
 
-    # # the below two texts will use default basefont of the page, which is ArialMT
-    # file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0,
-    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
-    #
-    # file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
-    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
-    #
-    # font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
-    #
-    # file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
-    #
-    # file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
-    #
-    # font_obj = file.add_font(name="Microsoft Sans Serif", width_scale=0.5, embed=True)
-    #
-    # file.text(page=0, x=20, y=400, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
-    #
-    # file.text(page=0, x=20, y=500, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-    #           h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    # the below two texts will use default basefont of the page, which is ArialMT
+    file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
 
-    font_obj = file.add_font(name="Times New Roman", width_scale=0.5, embed=True)
+    file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
 
-    file.text(page=0, x=20, y=600, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
 
-    file.text(page=0, x=20, y=700, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
-              h_align="left", v_align="bottom", text=f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+    file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    font_obj = file.add_font(name="MicrosoftSansSerif", width_scale=0.5, embed=True)
+
+    file.text(page=0, x=20, y=300, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    file.text(page=0, x=20, y=350, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    font_obj = file.add_font(name="TimesNewRomanPSMT", width_scale=0.5, embed=True)
+
+    file.text(page=0, x=20, y=400, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    file.text(page=0, x=20, y=450, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    font_obj = file.add_font(name="Helvetica", width_scale=0.5, embed=True)
+
+    file.text(page=0, x=20, y=500, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
+
+    file.text(page=0, x=20, y=550, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
+              h_align="left", v_align="bottom", text='"dsa" + 'f"AaBaCcDdEeFfGgHhJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")
 
     # save pdf
     file.save()

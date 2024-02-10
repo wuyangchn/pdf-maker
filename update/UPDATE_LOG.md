@@ -1,3 +1,11 @@
+# 2024-02-10 v0.0.38
+* Fix the display error of double quotation marks, which was missed in the subset font files.
+
+# 2024-02-10 v0.0.37
+* Note that font name should be postScriptName of a font, i.e., BaseFont attribute in Font object, and 
+FontName attribute in FontDescriptor object, otherwise, some pdf reader like Chrome Browser can read it 
+correctly, but Adobe Acrobat will show warning and replace by other built-in fonts.
+
 # 2024-02-10 v0.0.36
 * Fix the error of embedding fonts.
 
@@ -9,11 +17,13 @@ Extracted font file size:
 
 ![alt text](image-3.png)
 
-There is a difference of 4 bytes. The extracted file missed four charachters. So the issue might happen during the hex encoding procedure.
+There is a difference of 4 bytes. The extracted file missed four charachters. So the issue might happen 
+during the hex encoding procedure.
 
 ![alt text](image-4.png)
 
-Furtherly, it is noticed that the difference happens after the realignment of the hexadecimal representation, in which errors might happen.
+Furtherly, it is noticed that the difference happens after the realignment of the hexadecimal representation, 
+in which errors might happen.
 
 ![alt text](image-5.png)
 
