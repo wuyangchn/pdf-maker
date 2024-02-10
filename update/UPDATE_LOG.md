@@ -1,6 +1,9 @@
 
 # 2024-02-10 v0.0.40
 * Fix text wrapping error
+* The issue of displaying unicode characters should be related to the encoding method, which is WinAnsiEncoding
+as default. WinAnsiEncoding is similar to ASCII code. To support unicode characters, perhaps it is needed to 
+use Composite Fonts (CIDFont), compared to Simple Fonts, they require more dictionaries to define.
 
 # 2024-02-10 v0.0.39
 * Issue found: plus-minus sign cannot be displayed correctly.
