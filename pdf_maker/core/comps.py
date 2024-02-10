@@ -205,10 +205,7 @@ class Text(BaseContent):
         return [(rich_text, "normal")]
 
     def read_break(self, rich_text: str):
-        if "<r>" in rich_text:
-            text = rich_text.split("<r>")
-            return [(text[0], ""), (text[1], "r")]
-        return [(rich_text, "")]
+        return [(t, "") if i == 0 else (t, "r") for i, t in enumerate(rich_text.split("<r>"))]
 
     @staticmethod
     def _is_rich_text(text: str):

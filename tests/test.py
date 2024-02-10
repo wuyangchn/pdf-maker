@@ -81,6 +81,7 @@ def case2():
     yaxis: ap.Axis = plot.yaxis
     set1: ap.Set = plot.set1
     set2: ap.Set = plot.set2
+    age_results = sample.Info.results.isochron["figure_3"]
 
     plot_scale = (xaxis.min, xaxis.max, yaxis.min, yaxis.max)
 
@@ -124,6 +125,16 @@ def case2():
     p = pt.scale_to_points(xaxis.min, (yaxis.max + yaxis.min) / 2)
     pt.text(x=p[0] - 50, y=p[1], text=f"<sup>36</sup>Ar<sub>a</sub>/<sup>40</sup>Ar*",
             clip=False, coordinate="pt", h_align="middle", v_align="bottom", rotate=90)
+
+    # inside text
+    age, sage = round(age_results[0]['age'], 2), round(age_results[0]['s2'], 2)
+    F, sF = round(age_results[0]['F'], 2), round(age_results[0]['sF'], 2)
+    R0, sR0 = round(age_results[0]['initial'], 2), round(age_results[0]['sinitial'], 2)
+    pt.text(x=(xaxis.max - xaxis.min) * 0.6 + xaxis.min,
+            y=(yaxis.max - yaxis.min) * 0.7 + yaxis.min,
+            text=f"Age ={age} {chr(0xb1)} {sage} Ma<r>F = {F} {chr(0xb1)} {sF}<r>"
+                 f"R<sub>0</sub> = {R0} {chr(0xb1)} {sR0}",
+            clip=True, coordinate="scale", h_align="middle", v_align="center", rotate=0)
 
     file = pm.NewPDF(filepath="case2.pdf")
     # as default, an empty pdf will have no page
@@ -245,8 +256,8 @@ def case1():
 
 
 if __name__ == "__main__":
-    # case2()
+    case2()
     # test_rotate()
-    case1()
+    # case1()
 
     pass

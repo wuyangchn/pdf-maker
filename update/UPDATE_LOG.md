@@ -1,3 +1,7 @@
+
+# 2024-02-10 v0.0.40
+* Fix text wrapping error
+
 # 2024-02-10 v0.0.39
 * Issue found: plus-minus sign cannot be displayed correctly.
 
