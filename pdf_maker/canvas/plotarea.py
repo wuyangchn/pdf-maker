@@ -101,6 +101,7 @@ class PlotArea(Area):
             if self.is_out_side(x, y):
                 warnings.warn(f"The given text at {x, y} is on the outside of the plot area, "
                               f"and thus will have no effect.", UserWarning)
+                return
         return super(PlotArea, self).text(x=x, y=y, **options)
 
     def line(self, start: List[int], end: List[int], coordinate="scale", clip: bool = True, **options):
@@ -114,6 +115,7 @@ class PlotArea(Area):
             except TypeError:
                 warnings.warn(f"The line from {start} to {end} is on the outside of the plot area, "
                               f"and thus will have no effect.", UserWarning)
+                return
         return super(PlotArea, self).line(start=list(start), end=list(end), **options)
 
     def rect(self, left_bottom: Union[list, tuple], width: Union[int, float], height: Union[int, float],

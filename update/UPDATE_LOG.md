@@ -1,3 +1,6 @@
+# 2024-02-11 v0.0.43
+* Fix the error of clipping lines ouside of plotareas.
+
 # 2024-02-10 v0.0.42
 * Fix the issue of font file path error in Ubuntu system.
 

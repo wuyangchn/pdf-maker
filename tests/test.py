@@ -29,6 +29,10 @@ def test_create_a_pdf():
     pt2 = cv.add_plot_area(name="Plot2", plot_area=(0.6, 0.1, 0.35, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)
     pt3 = cv.add_plot_area(name="Plot3", plot_area=(0.12, 0.6, 0.75, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)
 
+    pt.line(start=(-10, 50), end=(-10, 100), width=1, coordinate="scale")
+    pt.line(start=(50, 210), end=(70, 210), width=1, coordinate="scale")
+    l = pt.line(start=(50, 190), end=(70, 190), width=1, coordinate="scale")
+    print(l._start)
     # add text based on coordinate scales. If the position is out of the scale, the item will be not plotted.
     pt2.text(name="TEXT02", x=40, y=70, text="AaBbCcDdEeFfGg", size=12, font="Arial", coordinate="scale")
     # z_index is used to move it to the top, otherwise they will be plotted based on the sequene of generation,
@@ -256,8 +260,8 @@ def case1():
 
 
 if __name__ == "__main__":
-    case2()
+    # case2()
     # test_rotate()
     # case1()
-
+    test_create_a_pdf()
     pass
