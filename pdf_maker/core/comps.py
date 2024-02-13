@@ -218,34 +218,34 @@ class Text(BaseContent):
     def to_chr(code: str):
         return "".join([chr(int(f"0x{each}", 16)) for each in code.lstrip("FEFF").split(" ")])
 
-    @staticmethod
-    def get_font_width(text: str, font: str, size: int):
-        font = TTFont(FONT_LIB.get(str(font).lower())['file'])
-        cmap = font['cmap']
-        t = cmap.getcmap(3, 1).cmap
-        s = font.getGlyphSet()
-        pixels_per_em = font['head'].unitsPerEm
-        total = 0
-        for c in text:
-            if ord(c) in t and t[ord(c)] in s:
-                total += s[t[ord(c)]].width
-            else:
-                total += s['.notdef'].width
-        total = total * float(size) / pixels_per_em
-        return int(total)
-
-    @staticmethod
-    def get_font_height(text: str, font: str):
-        tree = ElementTree.parse(FONT_LIB.get(font.lower())['file'])
-        root = tree.getroot()
-        head_obj = root.find('head')
-        OS_2_obj = root.find('OS_2')
-        pixels_per_em = head_obj.find("unitsPerEm").attrib['value']
-        ascender = OS_2_obj.find("sTypoAscender").attrib['value']
-        descender = OS_2_obj.find("sTypoDescender").attrib['value']
-        line_gap = OS_2_obj.find("sTypoLineGap").attrib['value']
-        line_height = (float(ascender) + float(descender) + float(line_gap)) / float(pixels_per_em)
-        return line_height
+    # @staticmethod
+    # def get_font_width(text: str, font: str, size: int):
+    #     font = TTFont(FONT_LIB.get(str(font).lower())['file'])
+    #     cmap = font['cmap']
+    #     t = cmap.getcmap(3, 1).cmap
+    #     s = font.getGlyphSet()
+    #     pixels_per_em = font['head'].unitsPerEm
+    #     total = 0
+    #     for c in text:
+    #         if ord(c) in t and t[ord(c)] in s:
+    #             total += s[t[ord(c)]].width
+    #         else:
+    #             total += s['.notdef'].width
+    #     total = total * float(size) / pixels_per_em
+    #     return int(total)
+    #
+    # @staticmethod
+    # def get_font_height(text: str, font: str):
+    #     tree = ElementTree.parse(FONT_LIB.get(font.lower())['file'])
+    #     root = tree.getroot()
+    #     head_obj = root.find('head')
+    #     OS_2_obj = root.find('OS_2')
+    #     pixels_per_em = head_obj.find("unitsPerEm").attrib['value']
+    #     ascender = OS_2_obj.find("sTypoAscender").attrib['value']
+    #     descender = OS_2_obj.find("sTypoDescender").attrib['value']
+    #     line_gap = OS_2_obj.find("sTypoLineGap").attrib['value']
+    #     line_height = (float(ascender) + float(descender) + float(line_gap)) / float(pixels_per_em)
+    #     return line_height
 
 
 class Line(BaseContent):
