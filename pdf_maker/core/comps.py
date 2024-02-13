@@ -249,13 +249,14 @@ class Text(BaseContent):
 
 
 class Line(BaseContent):
-    def __init__(self, start, end, line_style: str = "solid", **options):
+    def __init__(self, start, end, line_style: str = "solid", line_caps: str = "butt",
+                 color = 'black', **options):
         self._start = start
         self._end = end
         self._width = 1
         self._line_style = line_style
-        self._color = COLOR_PALETTE.get('black', [0, 0, 0])
-        self._line_caps = "butt"
+        self._color = color
+        self._line_caps = line_caps
 
         super().__init__(**options)
 
