@@ -5,8 +5,8 @@ A module for creating PDF files manually.
 
 [Update log](/update/UPDATE_LOG.md)
 
-**2024-02-10 v0.0.38**
-* Fix the display error of double quotation marks, which was missed in the subset font files.
+**2024-02-11 v0.0.44**
+* Add line caps for drawing lines, square and butt caps are supported.
 
 ## Example usage:
 

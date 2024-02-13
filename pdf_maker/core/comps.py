@@ -255,6 +255,7 @@ class Line(BaseContent):
         self._width = 1
         self._line_style = line_style
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._line_caps = "butt"
 
         super().__init__(**options)
 
@@ -262,6 +263,21 @@ class Line(BaseContent):
             self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
 
         # self.code()
+        self._check_caps()
+
+    def _check_caps(self):
+        if self._line_caps == "square":
+            if (self._end[1] - self._start[1]) ** 2 + (self._end[0] - self._start[0]) ** 2 != 0:
+                alpha = asin(abs(self._end[1] - self._start[1]) / (
+                        (self._end[1] - self._start[1]) ** 2 + (self._end[0] - self._start[0]) ** 2) ** .5)
+                self._start = (
+                    self._start[0] + (self._width / 2 * cos(alpha) * (1 if self._start[0] >= self._end[0] else -1)),
+                    self._start[1] + (self._width / 2 * sin(alpha) * (1 if self._start[1] >= self._end[1] else -1)))
+                self._end = (
+                    self._end[0] + (self._width / 2 * cos(alpha) * (1 if self._end[0] >= self._start[0] else -1)),
+                    self._end[1] + (self._width / 2 * sin(alpha) * (1 if self._end[1] >= self._start[1] else -1)))
+            else:
+                pass
 
     def code(self, start=None, end=None, lt: str = None):
         if start is None or end is None:

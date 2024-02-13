@@ -19,6 +19,12 @@ def test_create_a_pdf():
     # as default, an empty pdf will have no page
     file.add_page()
 
+    file.line(page=1, start=(10, 800), end=(10, 10), width=0.1)
+
+    file.line(page=1, start=(10, 700), end=(20, 690), width=1, line_caps="square")
+    file.line(page=1, start=(10, 700), end=(20, 710), width=1, line_caps="square")
+    file.line(page=1, start=(10, 600), end=(0, 610), width=1, line_caps="square")
+    file.line(page=1, start=(10, 600), end=(0, 590), width=1, line_caps="square")
     # create a canvas
     cv = pm.Canvas(width=17, height=12, unit="cm", show_frame=True, frame_line_width=1, clip_outside_plot_areas=False)
 
