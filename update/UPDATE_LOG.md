@@ -2,7 +2,7 @@
 * Add line caps for drawing lines, square and butt caps are supported.
 
 # v0.0.43 2024-02-11 
-* Fix the error of clipping lines ouside of plotareas.
+* Fix the error of clipping lines outside of plot areas.
 
 # v0.0.42 2024-02-10 
 * Fix the issue of font file path error in Ubuntu system.
