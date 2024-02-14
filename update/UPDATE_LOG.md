@@ -1,3 +1,7 @@
+
+# v0.0.45 2024-02-14 
+* Add a color template including ten colors
+
 # v0.0.44 2024-02-11 
 * Add line caps for drawing lines, square and butt caps are supported.
 
