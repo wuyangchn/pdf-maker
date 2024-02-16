@@ -15,7 +15,7 @@ import ararpy as ap
 
 def test_create_a_pdf():
 
-    file = pm.NewPDF(filepath="myPDF_for_cdr_test.pdf")
+    file = pm.NewPDF(filepath="myPDF_for_cdr_test_2.pdf")
     # as default, an empty pdf will have no page
     # file.add_page()
 

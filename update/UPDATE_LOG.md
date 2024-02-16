@@ -1,7 +1,8 @@
 # to do
 
-the output pdf cannot open in corelDRAW
-
+# v0.0.46 2024-02-16
+* Fix: problem in xref and length of content streams, now files can be opened with CorelDRAW.
+[Thanks KJ's help](https://stackoverflow.com/a/78007842/22143697)
 
 # v0.0.45 2024-02-14 
 * Add a color template including ten colors

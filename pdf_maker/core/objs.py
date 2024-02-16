@@ -304,9 +304,9 @@ class Obj:
 
     def length(self):
         if self.get_type() == "Stream":
-            if not str(self._length).isdigit():
-                return ""
-            return self._base_attr("/Length", f"{self._length} 0 R")
+            self.stream()
+            self._length = len(self._stream)
+            return self._base_attr("/Length", f"{self._length}")
         if self.get_type() == "FontFileStream":
             # For subtype Type 1, this should be wrong
             return f"/Length {len(self._font_file_hex)}\n/Length1 {len(self._font_file_bytes)}\n" + \
@@ -561,19 +561,21 @@ class Obj:
     def stream(self):
         if self.get_type() != "Stream":
             return ""
-        contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter], key=lambda obj: obj.z_index())
-        code = '\n'.join([obj.code() for obj in contents])
-        self._bytes_length = len(code.encode())
-        if self._filter == "ASCII85Decode":
-            import base64
-            code = base64.a85encode(code.encode('utf-8'))
-            self._bytes_length = len(code)
-            code.decode()
-        if self._filter == "ASCIIHexDecode":
-            code = "".join([char.encode().hex()[-2:] for char in code])
-            code = "\n".join(
-                [code[i * 64: (i + 1) * 64] for i in range(len(code) // 64)] + [code[len(code) // 64 * 64:]])
-        self._stream = code
+        if self._stream == "":
+            contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter], key=lambda obj: obj.z_index())
+            code = '\n'.join([obj.code() for obj in contents])
+            self._bytes_length = len(code.encode())
+            if self._filter == "ASCII85Decode":
+                import base64
+                code = base64.a85encode(code.encode('utf-8'))
+                self._bytes_length = len(code)
+                code.decode()
+            if self._filter == "ASCIIHexDecode":
+                code = "".join([char.encode().hex()[-2:] for char in code])
+                code = "\n".join(
+                    [code[i * 64: (i + 1) * 64] for i in range(len(code) // 64)] + [code[len(code) // 64 * 64:]])
+                code = code + "\n"
+            self._stream = code
         return f"stream\n{self._stream}\nendstream\n"
 
     def font_file_stream(self):

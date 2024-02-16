@@ -97,8 +97,6 @@ class NewPDF:
 
         def _add_stream():
             _stream = self.add_obj(type="Stream", text=[])  # stream must be created firstly
-            _length = self.add_obj(type="StreamLength", prefix="")
-            _stream._length = _length.index()
             return _stream
 
         if isinstance(size, (tuple, list)):
@@ -293,8 +291,8 @@ class NewPDF:
             obj._number = "00000"
             obj._state = "n"
             # set lengths for stream object after getting the stream
-            if obj.get_type() == "Stream" and obj.length() != "":
-                self.get_obj(index=obj._length)._prefix = obj._bytes_length
+            # if obj.get_type() == "Stream" and obj.length() != "":
+            #     self.get_obj(index=obj._length)._prefix = obj._bytes_length
         self._body = body
         return self._body
 
@@ -314,7 +312,7 @@ class NewPDF:
         root = _get_obj(type="Catalog")
         info = _get_obj(type="Info")
         self._trailer = f"trailer\n<<\n" \
-                        f"/Size {self._crf.size()}\n" \
+                        f"/Size {self._crf.size() + 1}\n" \
                         f"/Root {root}\n" \
                         f"/Info {info}\n" \
                         f">>\nstartxref\n{self._crf.startoffset()}\n%%EOF\n"

@@ -29,13 +29,14 @@ class Crf:
         return len(self._objs)
 
     def update(self):
-        return "\n".join([
+        obj_indexes = "\n".join([
             f"{self.offset(obj['offset'])} "
             f"{self.number(obj['number'])} "
-            f"{obj['state'][0]}" for obj in self._objs])
+            f"{obj['state'][0]} " for obj in self._objs])
+        return f"{self.offset()} {self.number('65536')} f \n" + obj_indexes
 
     def data(self):
-        return f"xref\n0 {self.size()}\n{self.update()}\n"
+        return f"xref\n0 {self.size() + 1}\n{self.update()}\n"
 
     def startoffset(self):
         return self._startoffset
