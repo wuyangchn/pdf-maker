@@ -1,3 +1,7 @@
+# to do
+
+the output pdf cannot open in corelDRAW
+
 
 # v0.0.45 2024-02-14 
 * Add a color template including ten colors
