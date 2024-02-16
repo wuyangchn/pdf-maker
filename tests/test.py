@@ -266,8 +266,8 @@ def case1():
 
 
 if __name__ == "__main__":
-    # case2()
+    case2()
     # test_rotate()
     # case1()
-    test_create_a_pdf()
+    # test_create_a_pdf()
     pass
