@@ -1,6 +1,9 @@
 # to do
 
-# v0.0.47 2024-02-16
+# v0.0.48 2024-02-27
+* Fix: z_index of plot area
+
+# v0.0.47 2024-02-27
 * Fix: bugs in plotting rect with fill color
 
 # v0.0.46 2024-02-16

@@ -30,7 +30,7 @@ class Area:
         self._show_frame: bool = show_frames
 
         if show_frame:
-            self.show_frame()
+            self.show_frame(z_index=options.get("z_index", 9999))
 
     def ppi(self, ppi: int = None):
         if ppi is not None:
