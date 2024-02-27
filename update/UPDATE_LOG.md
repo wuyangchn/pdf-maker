@@ -1,5 +1,8 @@
 # to do
 
+# v0.0.47 2024-02-16
+* Fix: bugs in plotting rect with fill color
+
 # v0.0.46 2024-02-16
 * Fix: problem in xref and length of content streams, now files can be opened with CorelDRAW.
 [Thanks KJ's help](https://stackoverflow.com/a/78007842/22143697)

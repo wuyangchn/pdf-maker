@@ -336,8 +336,8 @@ class Rect(BaseContent):
         self._line_width = 1
         self._color = COLOR_PALETTE.get('black', [0, 0, 0])
         self._fill: bool = False
+        self._fill_color = COLOR_PALETTE.get('white', [1, 1, 1])
         self._wind: bool = False
-        self._wind_color = COLOR_PALETTE.get('white', [1, 1, 1])
         self._wind_style = "WIND_NON_ZERO"
         self._wind_inside_rects: List[Tuple[Union[float, int], ...]] = ...
 
@@ -345,17 +345,20 @@ class Rect(BaseContent):
 
         if isinstance(self._color, str):
             self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
+        if isinstance(self._fill_color, str):
+            self._fill_color = COLOR_PALETTE.get(self._fill_color, [0, 0, 0])
 
         # self.code()
 
     def code(self):
-        wind = ""
-        if self._wind and len(self._wind_inside_rects) > 0:
-            rects = '\n'.join([' '.join([str(i) for i in rect]) + ' re' for rect in self._wind_inside_rects])
-            wind = f"\n{rects} f{'*' if self._wind_style == 'WIND_EVEN_ODD' else ''}"
+        rects = '\n'.join(
+            [' '.join([str(i) for i in rect]) + ' re' for rect in self._wind_inside_rects]) if self._wind and len(
+            self._wind_inside_rects) > 0 else ''
+        wind = f"\n{rects} f{'*' if self._wind_style == 'WIND_EVEN_ODD' else ''}" \
+            if self._wind else 'b' if self._fill else ''
         self._code = f"{str(self._line_width)} w\n" \
                      f"{' '.join([str(i) for i in self._color])} RG\n" \
-                     f"{(' '.join([str(i) for i in self._wind_color]) + ' rg') if self._wind else ''}\n" \
+                     f"{' '.join([str(i) for i in self._fill_color]) + ' rg'}\n" \
                      f"{self._x} {self._y} {self._width} {self._height} re {wind}\nS"
         return self._code
 
