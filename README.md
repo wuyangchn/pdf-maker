@@ -1,5 +1,5 @@
 # PDF-Maker
-A module for creating PDF files manually.
+A module for creating PDF files from code.
 
 ## Update log
 
