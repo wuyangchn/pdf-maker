@@ -215,13 +215,13 @@ def case1():
     # the below two texts will use default basefont of the page, which is ArialMT
     file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0, color=color,
               h_align="left", v_align="bottom", text=f"=±=+><123456 {chr(0xb1)}  {chr(0x007B)} {chr(0x0040)} {chr(0x2264)} {chr(0x2265)} {chr(0x007D)} Test Font Embeding")
-
-    file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
+    color = '#e2dacd'
+    file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0, color=color,
               h_align="left", v_align="bottom", text=f"453.45 {chr(0xb1)} 3.4 Ma Test Font Embeding")
 
     font_obj = file.add_font(name="Calibri", width_scale=0.5, embed=True)
-
-    file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont,
+    color = '#935d68'
+    file.text(page=0, x=20, y=200, line_space=1, size=12, base=0, rotate=0, font=font_obj._basefont, color=color,
               h_align="left", v_align="bottom", text=f"123456 {chr(0xb1)} Test Font Embeding")
 
     file.text(page=0, x=20, y=250, line_space=1, size=24, base=0, rotate=0, font=font_obj._basefont,
