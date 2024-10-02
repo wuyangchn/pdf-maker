@@ -211,9 +211,9 @@ def test_rotate():
 def case1():
     basefont = "ArialMT"
     file = pm.NewPDF(filepath="case1.pdf", _basefont=basefont)
-
+    color = "red"
     # the below two texts will use default basefont of the page, which is ArialMT
-    file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0,
+    file.text(page=0, x=20, y=100, line_space=1, size=12, base=0, rotate=0, color=color,
               h_align="left", v_align="bottom", text=f"=±=+><123456 {chr(0xb1)}  {chr(0x007B)} {chr(0x0040)} {chr(0x2264)} {chr(0x2265)} {chr(0x007D)} Test Font Embeding")
 
     file.text(page=0, x=20, y=150, line_space=1, size=24, base=0, rotate=0,
@@ -266,8 +266,8 @@ def case1():
 
 
 if __name__ == "__main__":
-    case2()
+    # case2()
     # test_rotate()
-    # case1()
+    case1()
     # test_create_a_pdf()
     pass

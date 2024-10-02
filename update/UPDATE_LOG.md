@@ -1,5 +1,8 @@
 # to do
 
+# v0.0.49 2024-10-02
+* Update: supports hex color
+
 # v0.0.48 2024-02-27
 * Fix: z_index of plot area
 

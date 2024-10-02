@@ -34,6 +34,11 @@ class BaseContent:
             names = [key, f"_{key.lower()}"]
             for name in names:
                 if hasattr(self, name) and not callable(getattr(self, name)):
+                    if 'color' in name and isinstance(value, str):  # value: 'black', 'red', ..., '#935d68'
+                        if value.startswith('#'):
+                            value = list(round(int(value.lstrip('#')[i:i + 2], 16) / 255, 3) for i in (0, 2, 4))
+                        else:
+                            value = COLOR_PALETTE.get(value, [0, 0, 0])
                     setattr(self, name, value)
 
         self._code: str = ""
@@ -107,7 +112,7 @@ class Text(BaseContent):
         self._sup_size = int(self._size * 2. / 3.)
         self._sub_Ts = -int(self._size * 1. / 4.)
         self._sup_Ts = int(self._size * 1. / 3.)
-        self._color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._color = [0, 0, 0]
         self._line_space = 1.3
         self._line_height = 0
         self._font_widths: Mapping[int, int] = ...
