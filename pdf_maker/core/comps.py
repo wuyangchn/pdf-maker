@@ -33,7 +33,7 @@ class BaseContent:
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
             for name in names:
-                if hasattr(self, name) and not callable(getattr(self, name)):
+                if (hasattr(self, name) and not callable(getattr(self, name))) or not hasattr(self, name):
                     if 'color' in name and isinstance(value, str):  # value: 'black', 'red', ..., '#935d68'
                         if value.startswith('#'):
                             value = list(round(int(value.lstrip('#')[i:i + 2], 16) / 255, 3) for i in (0, 2, 4))
@@ -121,9 +121,6 @@ class Text(BaseContent):
         self._rotate = 0
 
         super().__init__(**options)
-
-        if isinstance(self._color, str):
-            self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
 
         # self.code()
 
@@ -254,19 +251,16 @@ class Text(BaseContent):
 
 
 class Line(BaseContent):
-    def __init__(self, start, end, line_style: str = "solid", line_caps: str = "butt",
-                 color = 'black', **options):
+    def __init__(self, start, end, **options):
         self._start = start
         self._end = end
         self._width = 1
-        self._line_style = line_style
-        self._color = color
-        self._line_caps = line_caps
+        self._line_style = "solid"  # 'solid', 'dashed', 'dotted', 'densely_dotted',
+                                    # 'densely_dashed', 'loosely_dashed', 'loosely_dotted'
+        self._color = [0, 0, 0]
+        self._line_caps = "butt"  # 'none', 'butt', 'square'
 
         super().__init__(**options)
-
-        if isinstance(self._color, str):
-            self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
 
         # self.code()
         self._check_caps()
@@ -339,19 +333,14 @@ class Line(BaseContent):
 class Rect(BaseContent):
     def __init__(self, **options):
         self._line_width = 1
-        self._color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._color = [0, 0, 0]
         self._fill: bool = False
-        self._fill_color = COLOR_PALETTE.get('white', [1, 1, 1])
+        self._fill_color = [1, 1, 1]
         self._wind: bool = False
         self._wind_style = "WIND_NON_ZERO"
         self._wind_inside_rects: List[Tuple[Union[float, int], ...]] = ...
 
         super().__init__(**options)
-
-        if isinstance(self._color, str):
-            self._color = COLOR_PALETTE.get(self._color, [0, 0, 0])
-        if isinstance(self._fill_color, str):
-            self._fill_color = COLOR_PALETTE.get(self._fill_color, [0, 0, 0])
 
         # self.code()
 
@@ -378,17 +367,12 @@ class Scatter(BaseContent):
         """
         self._size = 5
         self._line_width = 1
-        self._fill_color = COLOR_PALETTE.get('black', [0, 0, 0])
-        self._stroke_color = COLOR_PALETTE.get('black', [0, 0, 0])
+        self._fill_color = [0, 0, 0]
+        self._stroke_color = [0, 0, 0]
         self._scale_factor = 1
         self._type = "circle"
 
         super().__init__(**options)
-
-        if isinstance(self._fill_color, str):
-            self._fill_color = COLOR_PALETTE.get(self._fill_color, [0, 0, 0])
-        if isinstance(self._stroke_color, str):
-            self._stroke_color = COLOR_PALETTE.get(self._stroke_color, [0, 0, 0])
 
         # self.code()
 

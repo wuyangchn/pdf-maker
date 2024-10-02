@@ -1,40 +1,43 @@
 # to do
 
-# v0.0.49 2024-10-02
+## v0.0.50 2024-10-02
+* Fix bugs
+
+## v0.0.49 2024-10-02
 * Update: supports hex color
 
-# v0.0.48 2024-02-27
+## v0.0.48 2024-02-27
 * Fix: z_index of plot area
 
-# v0.0.47 2024-02-27
+## v0.0.47 2024-02-27
 * Fix: bugs in plotting rect with fill color
 
-# v0.0.46 2024-02-16
+## v0.0.46 2024-02-16
 * Fix: problem in xref and length of content streams, now files can be opened with CorelDRAW.
 [Thanks KJ's help](https://stackoverflow.com/a/78007842/22143697)
 
-# v0.0.45 2024-02-14 
+## v0.0.45 2024-02-14 
 * Add a color template including ten colors
 
-# v0.0.44 2024-02-11 
+## v0.0.44 2024-02-11 
 * Add line caps for drawing lines, square and butt caps are supported.
 
-# v0.0.43 2024-02-11 
+## v0.0.43 2024-02-11 
 * Fix the error of clipping lines outside of plot areas.
 
-# v0.0.42 2024-02-10 
+## v0.0.42 2024-02-10 
 * Fix the issue of font file path error in Ubuntu system.
 
-# v0.0.41 2024-02-10 
+## v0.0.41 2024-02-10 
 * Revise setup.py, fixed the issue of missing resource files.
 
-# v0.0.40 2024-02-10 
+## v0.0.40 2024-02-10 
 * Fix text wrapping error
 * The issue of displaying unicode characters should be related to the encoding method, which is WinAnsiEncoding
 as default. WinAnsiEncoding is similar to ASCII code. To support unicode characters, perhaps it is needed to 
 use Composite Fonts (CIDFont), compared to Simple Fonts, they require more dictionaries to define.
 
-# v0.0.39 2024-02-10 
+## v0.0.39 2024-02-10 
 * Issue found: plus-minus sign cannot be displayed correctly.
 
 This issue seems to be caused by the encode procedure, for example, the character "±" (unicode 00B1) will
@@ -67,15 +70,15 @@ codes, such as "≤" (unicode 8804). Currently I dont exactly know how to comple
 to use ASCII85Decode but not helpful. I'll evaluate if it is necessary to search deeper to find the perfect 
 solution to support more Unicode characters.
     
-# v0.0.38 2024-02-10 
+## v0.0.38 2024-02-10 
 * Fix the display error of double quotation marks, which was missed in the subset font files.
 
-# v0.0.37 2024-02-10 
+## v0.0.37 2024-02-10 
 * Note that font name should be postScriptName of a font, i.e., BaseFont attribute in Font object, and 
 FontName attribute in FontDescriptor object, otherwise, some pdf reader like Chrome Browser can read it 
 correctly, but Adobe Acrobat will show warning and replace by other built-in fonts.
 
-# v0.0.36 2024-02-10 
+## v0.0.36 2024-02-10 
 * Fix the error of embedding fonts.
 
 Source font file size:
@@ -104,7 +107,7 @@ Three fonts are all embedded.
 
 ![alt text](image-7.png)
 
-# v0.0.35 2024-02-09 
+## v0.0.35 2024-02-09 
 * Add multiply fonts to pages. 
 * TrueType fonts like Arial are displayed well now, but Type 1 font don't work well.
 Possible reason: comparing extracted font file by pdf-parser.py from the pdf and the source file times.ttf,
@@ -114,20 +117,20 @@ it is found that extracted font file lost some information. Times ttf might be n
 
 ![alt text](image-1.png)
 
-# v0.0.34 2024-02-09 
+## v0.0.34 2024-02-09 
 * Try to solve the embedding issue, some potential problems found: length calculation of the font file 
 stream.
 * A javascript module named [fontsubset](https://github.com/flashlizi/fontsubset) can be used to extract 
 subset from a full font file so the size of pdf with embedded font files can be decreased. 
 Usage: fontsubset -s "String containing characters might be included" fontFile outputFile
 
-# v0.0.33 2024-02-08 
+## v0.0.33 2024-02-08 
 * Add rotation attribute for text item (might also work for other items like rect).
 * Change the priorities of three rich text tags, now color > super/subscript > break. That means
 <red>AB<sub>CD</sub><r>EF<red> is allowed, but AB<sub><red>CD</red></sub> will be not displayed correctly.
 And these tags should not separate others, like <red><sub>CD</red></sub>, which will be displayed wrong.
 
-# v0.0.32 2024-02-08 
+## v0.0.32 2024-02-08 
 * Try to embed font files into the Font Descriptor objects. 
 [This answer](https://stackoverflow.com/a/76125971/22143697) show an example of embedding font files, 
 his pdf works well in Adobe Acrobat. But I failed to do this, still trying to fine why.
@@ -135,20 +138,20 @@ his pdf works well in Adobe Acrobat. But I failed to do this, still trying to fi
 font info from a pdf file. 
 * This issue haven't been solve.
 
-# v0.0.31 2024-02-07 
+## v0.0.31 2024-02-07 
 * Fix font issue, currently Arial font works well, Adobe can successfully recognize the texts,
 but other fonts may not work for Adobe Acrobat. Adobe Illustrator can work well for all fonts.
 * Add auto middle alignment for tests.
  
-# v0.0.3 2024-02-07 
+## v0.0.3 2024-02-07 
 * Add other attributions such as FontDescriptor in the Font object.
 * Read font information from xml files, and embed them into the pdf.
 * A horizontal scale (integer) will be used to control the actual widths of characters, default 0.5.
 
-# v0.0.2 2024-02-05 
+## v0.0.2 2024-02-05 
 * Add canvas
 
-# v0.0.1 2024-02-04 
+## v0.0.1 2024-02-04 
 * First release
 * Basic functions: Create a PDF, add text, lines and scatters. Supports superscript
  and subscript and different color in one string.

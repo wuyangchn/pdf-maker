@@ -68,7 +68,7 @@ class NewPDF:
                              producer=self.producer, creator=self.creator))
         # create font object
         self.add_font(name=self._basefont, width_scale=0.5, embed=True)
-        # as default, an empty pdf will have no page
+        # as default, an empty pdf will have one page
         self.add_page()
 
     def del_obj(self, index: int):
@@ -233,30 +233,26 @@ class NewPDF:
         contents_page.text(text)  # add text component to the content object
         return text
 
-    def line(self, page: int, start: Union[list, tuple], end: Union[list, tuple], width: Union[float, int] = None,
-             color: Union[tuple, list, str] = None, **options):
+    def line(self, page: int, start: Union[list, tuple], end: Union[list, tuple], base: int = 1,
+             width: Union[float, int] = None, color: Union[tuple, list, str] = None, **options):
         if width is None:
             width = 0.5
         if color is None:
             color = "black"
-        if isinstance(color, str):
-            color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
-        page = self.get_page(index=page)
+        page = self.get_page(index=page, base=base)
         contents_page = self.get_obj(index=page.get_contents_index())
         line = Line(start=start, end=end, color=color, width=width, **options)
         contents_page.line(line)
         return line
 
-    def rect(self, page: int, left_bottom: Union[list, tuple], width: int, height: int,
+    def rect(self, page: int, left_bottom: Union[list, tuple], width: int, height: int, base: int = 1,
              line_width: Union[float, int] = None, color: Union[tuple, list, str] = None,
              **options):
         if line_width is None:
             line_width = 0.5
         if color is None:
             color = "black"
-        if isinstance(color, str):
-            color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
-        page = self.get_page(index=page)
+        page = self.get_page(index=page, base=base)
         contents_page = self.get_obj(index=page.get_contents_index())
         rect = Rect(x=left_bottom[0], y=left_bottom[1], width=width, height=height,
                     line_width=line_width, color=color, **options)
@@ -264,12 +260,12 @@ class NewPDF:
         return rect
 
     def scatter(self, page: int, x: int, y: int, size: int = 5, fill_color: Union[tuple, list, str] = None,
-                stroke_color: Union[tuple, list, str] = None, **options):
+                base: int = 1, stroke_color: Union[tuple, list, str] = None, **options):
         if stroke_color is None:
             stroke_color = "black"
         if fill_color is None:
             fill_color = "grey"
-        page = self.get_page(index=page)
+        page = self.get_page(index=page, base=base)
         contents_page = self.get_obj(index=page.get_contents_index())
         scatter = Scatter(x=x, y=y, size=size, fill_color=fill_color, stroke_color=stroke_color, **options)
         contents_page.scatter(scatter)

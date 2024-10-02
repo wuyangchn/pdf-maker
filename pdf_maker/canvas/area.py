@@ -16,21 +16,32 @@ from pdf_maker.core.comps import Text, Line, Scatter, Rect
 
 class Area:
     def __init__(self, width, height, show_frame: bool = False, margin_left: int = 0,
-                 margin_bottom: int = 0, unit: str = "point", ppi: int = 72,
-                 background_color: List[int] = COLOR_PALETTE["white"], show_frames: bool = True,
+                 margin_bottom: int = 0, unit: str = "point", ppi: int = 72, show_frames: bool = True,
                  **options):
         self._ppi = ppi  # points per inch, usually 72
         self._unit = unit
         self._width, self._height = self.unit_to_points(width, height, unit=unit)
         self._margin_left, self._margin_bottom = self.unit_to_points(margin_left, margin_bottom, unit=unit)
 
-        self._background_color: List[int] = background_color
+        self._background_color: List[int] = [1, 1, 1]
         self._transparency: float = ...
         self._components: List[Union[Text, Line, Scatter, Rect], ...] = []
         self._show_frame: bool = show_frames
+        self._z_index = 9999
+
+        for key, value in options.items():
+            names = [key, f"_{key.lower()}"]
+            for name in names:
+                if (hasattr(self, name) and not callable(getattr(self, name))) or not hasattr(self, name):
+                    if 'color' in name and isinstance(value, str):  # value: 'black', 'red', ..., '#935d68'
+                        if value.startswith('#'):
+                            value = list(round(int(value.lstrip('#')[i:i + 2], 16) / 255, 3) for i in (0, 2, 4))
+                        else:
+                            value = COLOR_PALETTE.get(value, [0, 0, 0])
+                    setattr(self, name, value)
 
         if show_frame:
-            self.show_frame(z_index=options.get("z_index", 9999))
+            self.show_frame(z_index=self._z_index, **options)
 
     def ppi(self, ppi: int = None):
         if ppi is not None:
@@ -127,8 +138,6 @@ class Area:
             width = 0.5
         if color is None:
             color = "black"
-        if isinstance(color, str):
-            color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
         line = Line(start=start, end=end, color=color, width=width, **options)
         self._components.append(line)
         return line
@@ -140,8 +149,6 @@ class Area:
             line_width = 0.5
         if color is None:
             color = "black"
-        if isinstance(color, str):
-            color = COLOR_PALETTE.get(color.lower(), [0, 0, 0])
         rect = Rect(x=left_bottom[0], y=left_bottom[1], width=width, height=height, line_width=line_width,
                     color=color, **options)
         self._components.append(rect)

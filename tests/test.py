@@ -16,22 +16,27 @@ import ararpy as ap
 def test_create_a_pdf():
 
     file = pm.NewPDF(filepath="myPDF_for_cdr_test_2.pdf")
-    # as default, an empty pdf will have no page
-    # file.add_page()
+    # as default, an empty pdf will have one page
+    file.line(page=1, start=(10, 800), end=(10, 10), width=0.1)
+    color = '#cd0000'
+    file.line(page=1, start=(10, 700), end=(20, 690), width=1, line_caps="square", color=color)
+    file.line(page=1, start=(10, 700), end=(20, 710), width=1, line_caps="square", color=color)
+    color = '#49ae1d'
+    file.line(page=1, start=(10, 600), end=(0, 610), width=1, line_caps="square", color=color)
+    file.line(page=1, start=(10, 600), end=(0, 590), width=1, line_caps="square", color=color)
 
-    # file.line(page=1, start=(10, 800), end=(10, 10), width=0.1)
-    #
-    # file.line(page=1, start=(10, 700), end=(20, 690), width=1, line_caps="square")
-    # file.line(page=1, start=(10, 700), end=(20, 710), width=1, line_caps="square")
-    # file.line(page=1, start=(10, 600), end=(0, 610), width=1, line_caps="square")
-    # file.line(page=1, start=(10, 600), end=(0, 590), width=1, line_caps="square")
+    file.add_page()
     # create a canvas
-    cv = pm.Canvas(width=17, height=12, unit="cm", show_frame=True, frame_line_width=1, clip_outside_plot_areas=False)
+    color = '#ff5e14'
+    cv = pm.Canvas(width=17, height=12, unit="cm", show_frame=True, frame_line_width=1, color=color,
+                   clip_outside_plot_areas=False)
 
     # add plot areas to the canvas and define coordinate scale,
     # the position and widths and heights of the plot area are defined relative to the canvas
     # plot_area = (margin_to_left, margin_to_bottom, width, height), plot_scale = (xMin, xMax, yMix, yMax)
-    pt = cv.add_plot_area(name="Plot1", plot_area=(0.1, 0.1, 0.35, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)
+    color = '#549aab'
+    pt = cv.add_plot_area(name="Plot1", plot_area=(0.1, 0.1, 0.35, 0.35), plot_scale=(0, 200, 0, 200), color=color,
+                          show_frame=True)
     # pt2 = cv.add_plot_area(name="Plot2", plot_area=(0.6, 0.1, 0.35, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)
     # pt3 = cv.add_plot_area(name="Plot3", plot_area=(0.12, 0.6, 0.75, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)
     #
@@ -70,6 +75,7 @@ def test_create_a_pdf():
     # # Finally we need to add canvas to a page
     # # As default, the page index starts from 1 because it is more intuitional. It can be defined as base = 0
     file.canvas(page=1, margin_left=1, margin_top=10, canvas=cv, unit="cm")
+    file.canvas(page=2, margin_left=1, margin_top=10, canvas=cv, unit="cm")
 
     # add text to page instead of a canvas, in this case the position will be in pixel
     # <r> for break, <sup> and <sub> for superscript and subscript respectively.
@@ -268,6 +274,6 @@ def case1():
 if __name__ == "__main__":
     # case2()
     # test_rotate()
-    case1()
-    # test_create_a_pdf()
+    # case1()
+    test_create_a_pdf()
     pass

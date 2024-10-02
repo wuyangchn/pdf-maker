@@ -5,8 +5,8 @@ A module for creating PDF files manually.
 
 [Update log](/update/UPDATE_LOG.md)
 
-**2024-02-11 v0.0.44**
-* Add line caps for drawing lines, square and butt caps are supported.
+**2024-10-02 v0.0.50**
+* Supports hex colors for all components.
 
 ## Example usage:
 
