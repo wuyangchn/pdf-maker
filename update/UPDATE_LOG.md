@@ -1,10 +1,10 @@
 # to do
 
+## v0.0.51 2024-10-08
+* Update: clip line and axis sticks
+
 ## v0.0.50 2024-10-02
 * Fix bugs
-
-## v0.0.49 2024-10-08
-* Update: clip line and axis sticks
 
 ## v0.0.49 2024-10-02
 * Update: supports hex color
