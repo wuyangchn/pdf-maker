@@ -46,33 +46,50 @@ class PlotArea(Area):
         y = (y - self._scale[2]) * self.ppu("y") + self._margin_bottom
         return x, y
 
-    def clip_curve(self, x, y, func_y: MethodType, func_x: MethodType):
+    def clip_curve(self, x, y, func_y: MethodType, func_x: MethodType, x_clip=True, y_clip=True):
         if not self.is_out_side(x, y):
             return x, y
         if func_y is None:
-            if self._margin_bottom <= y <= self._margin_bottom + self._height:
-                return
-            else:
-                return x, self._margin_bottom if y < self._margin_bottom else self._margin_bottom + self._height
+            if y_clip:
+                if self._margin_bottom <= y <= self._margin_bottom + self._height:
+                    return
+                else:
+                    return x, self._margin_bottom if y < self._margin_bottom else self._margin_bottom + self._height
         if func_x is None:
-            if self._margin_left <= x <= self._margin_left + self._width:
+            if x_clip:
+                if self._margin_left <= x <= self._margin_left + self._width:
+                    return
+                else:
+                    return self._margin_left if x < self._margin_left else self._margin_left + self._width, y
+        if x_clip:
+            if func_y is None and not (self._margin_left <= x <= self._margin_left + self._width):
                 return
-            else:
-                return self._margin_left if x < self._margin_left else self._margin_left + self._width, y
-        if x > self._margin_left + self._width:
-            x = self._margin_left + self._width
-        if x < self._margin_left:
-            x = self._margin_left
-        y = func_y(x)
-        if y > self._margin_bottom + self._height:
-            y = self._margin_bottom + self._height
-        if y < self._margin_bottom:
-            y = self._margin_bottom
-        x = func_x(y)
-        if self.is_out_side(x, y):
-            return x, y
+            elif func_y is None:
+                func_y = lambda _x: y
+            if x > self._margin_left + self._width:
+                x = self._margin_left + self._width
+            if x < self._margin_left:
+                x = self._margin_left
+            y = func_y(x)
+        if y_clip:
+            if func_x is None and not (self._margin_bottom <= y <= self._margin_bottom + self._height):
+                return
+            elif func_x is None:
+                func_x = lambda _y: x
+            if y > self._margin_bottom + self._height:
+                y = self._margin_bottom + self._height
+            if y < self._margin_bottom:
+                y = self._margin_bottom
+            x = func_x(y)
+        if self.is_out_side(x, self._margin_bottom) and x_clip:
+            return
+        if self.is_out_side(self._margin_left, y) and y_clip:
+            return
+        if self.is_out_side(x, y) and (x_clip == y_clip):
+            return
+        return x, y
 
-    def _clip_line(self, x, y, start, end):
+    def _clip_line(self, x, y, start, end, x_clip=True, y_clip=True):
         if end[0] - start[0] != 0:
             func_y = lambda x: (end[1] - start[1]) / (end[0] - start[0]) * (x - start[0]) + start[1]
         else:
@@ -81,11 +98,11 @@ class PlotArea(Area):
             func_x = lambda y: (end[0] - start[0]) / (end[1] - start[1]) * (y - start[1]) + start[0]
         else:
             func_x = None
-        return self.clip_curve(x, y, func_y=func_y, func_x=func_x)
+        return self.clip_curve(x, y, func_y=func_y, func_x=func_x, x_clip=x_clip, y_clip=y_clip)
 
-    def clip_line(self, start, end):
-        _start = self._clip_line(*start, start, end)
-        _end = self._clip_line(*end, start, end)
+    def clip_line(self, start, end, x_clip=True, y_clip=True):
+        _start = self._clip_line(*start, start, end, x_clip=x_clip, y_clip=y_clip)
+        _end = self._clip_line(*end, start, end, x_clip=x_clip, y_clip=y_clip)
         if _start is not None and _end is not None:
             return _start, _end
 
@@ -104,14 +121,15 @@ class PlotArea(Area):
                 return
         return super(PlotArea, self).text(x=x, y=y, **options)
 
-    def line(self, start: List[int], end: List[int], coordinate="scale", clip: bool = True, **options):
+    def line(self, start: List[int], end: List[int], coordinate="scale", clip: bool = True,
+             x_clip=True, y_clip=True, **options):
         if options.get("name", "") in KEYNAMES:
             raise ValueError(f"{options.get('name')} is reserved name that cannot be used.")
         start = self.scale_to_points(*start, coordinate)
         end = self.scale_to_points(*end, coordinate)
         if clip:
             try:
-                start, end = self.clip_line(start, end)
+                start, end = self.clip_line(start, end, x_clip=x_clip, y_clip=y_clip)
             except TypeError:
                 warnings.warn(f"The line from {start} to {end} is on the outside of the plot area, "
                               f"and thus will have no effect.", UserWarning)

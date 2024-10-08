@@ -42,7 +42,27 @@ def test_create_a_pdf():
     #
     # pt.line(start=(-10, 50), end=(-10, 100), width=1, coordinate="scale")
     # pt.line(start=(50, 210), end=(70, 210), width=1, coordinate="scale")
-    # l = pt.line(start=(50, 190), end=(70, 190), width=1, coordinate="scale")
+    l = pt.line(start=(50, 50), end=(600, 400), width=1, coordinate="scale", clip=True, x_clip=False, y_clip=True)
+    l = pt.line(start=(50, 50), end=(600, 400), color='red', width=1, coordinate="scale", clip=True, x_clip=True, y_clip=False)
+    l = pt.line(start=(50, 50), end=(400, 600), width=1, coordinate="scale", clip=True, x_clip=True, y_clip=False)
+    l = pt.line(start=(50, 50), end=(400, 600), color='red', width=1, coordinate="scale", clip=True, x_clip=False, y_clip=True)
+
+    l = pt.line(start=(150, 50), end=(600, 50), width=1, coordinate="scale", clip=True, x_clip=False, y_clip=True)
+    l = pt.line(start=(150, 50), end=(600, 50), color='red', width=1, coordinate="scale", clip=True, y_clip=False)
+
+    l = pt.line(start=(150, 100), end=(150, 400), width=1, coordinate="scale", clip=True, x_clip=True, y_clip=False)
+    l = pt.line(start=(150, 100), end=(150, 400), color='red', width=1, coordinate="scale", clip=True)
+    l = pt.line(start=(100, 50), end=(-50, 50), width=1, coordinate="scale", clip=True, x_clip=False, y_clip=True)
+    l = pt.line(start=(100, 50), end=(-50, 50), color='red', width=1, coordinate="scale", clip=True)
+    l = pt.line(start=(130, 80), end=(130, -50), width=1, coordinate="scale", clip=True, x_clip=True, y_clip=False)
+    l = pt.line(start=(130, 80), end=(130, -50), color='red', width=1, coordinate="scale", clip=True)
+
+    l = pt.line(start=(100, 0), end=(100, -50), width=1, coordinate="scale", clip=True, x_clip=True, y_clip=False)
+    l = pt.line(start=(100, 0), end=(100, -50), color='red', width=1, coordinate="scale", clip=True)
+
+    l = pt.line(start=(-10, 0), end=(-10, -50), width=1, coordinate="scale", clip=True, x_clip=True, y_clip=False)
+    l = pt.line(start=(-10, 0), end=(-10, -50), color='red', width=1, coordinate="scale", clip=True)
+
     # # print(l._start)
     # # add text based on coordinate scales. If the position is out of the scale, the item will be not plotted.
     # pt2.text(name="TEXT02", x=40, y=70, text="AaBbCcDdEeFfGg", size=12, font="Arial", coordinate="scale")
