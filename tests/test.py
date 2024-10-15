@@ -35,7 +35,7 @@ def test_create_a_pdf():
     # the position and widths and heights of the plot area are defined relative to the canvas
     # plot_area = (margin_to_left, margin_to_bottom, width, height), plot_scale = (xMin, xMax, yMix, yMax)
     color = '#549aab'
-    pt = cv.add_plot_area(name="Plot1", plot_area=(0.1, 0.1, 0.35, 0.35), plot_scale=(0, 200, 0, 200), color=color,
+    pt = cv.add_plot_area(name="Plot1", plot_area=[0.1, 0.1, 0.35, 0.35], plot_scale=[0, 200, 0, 200], color=color,
                           show_frame=True)
     # pt2 = cv.add_plot_area(name="Plot2", plot_area=(0.6, 0.1, 0.35, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)
     # pt3 = cv.add_plot_area(name="Plot3", plot_area=(0.12, 0.6, 0.75, 0.35), plot_scale=(0, 200, 0, 200), show_frame=True)

@@ -18,10 +18,10 @@ warnings.showwarning = custom_warn
 
 
 class PlotArea(Area):
-    def __init__(self, name: str, scale: Tuple[Union[int, float], ...], **options):
+    def __init__(self, name: str, scale: List[Union[int, float, str], ...], **options):
         super(PlotArea, self).__init__(**options)
         self._name = name
-        self._scale: Tuple[Union[int, float], ...] = scale
+        self._scale: List[Union[int, float, str], ...] = [float(i) for i in scale]
         self._clip_outside = True
 
     def ppu(self, axis: str):

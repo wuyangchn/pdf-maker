@@ -1,5 +1,8 @@
 # to do
 
+## v0.0.52 2024-10-15
+* Update: support string for plot area scales
+
 ## v0.0.51 2024-10-08
 * Update: clip line and axis sticks
 

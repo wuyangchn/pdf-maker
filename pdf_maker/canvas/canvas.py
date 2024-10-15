@@ -29,13 +29,13 @@ class Canvas(Area):
             self.clip_outside_plotareas()
 
     def add_plot_area(self, plt: PlotArea = None, name: str = None,
-                      plot_area: Tuple[Union[int, float], ...] = (0, 0, 0, 0),
-                      plot_scale: Tuple[Union[int, float], ...] = (0, 100, 0, 100), **options):
+                      plot_area: List[Union[int, float], ...] = (0, 0, 0, 0),
+                      plot_scale: List[Union[int, float], ...] = (0, 100, 0, 100), **options):
         """
         Args:
             plt: PlotArea instance
             name: PlotArea name, mandatory when plt is not given
-            plot_area: plot area defined by four numbers (left margin, bottom margin, with, height)
+            plot_area: plot area defined by four numbers (left margin, bottom margin, width, height)
                        relative to the canvas. Note that these four number should be in range [0, 1]
             plot_scale: plot scale defined by (xMin, xMax, yMin, yMax)
 

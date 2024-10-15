@@ -28,7 +28,6 @@ class NewPDF:
     def __init__(self, filepath: str = "", **options):
 
         self._objs: List[Obj] = []
-        self._pages = []
         self._crf: Crf = ...
         self._header = "%PDF-1.7\n%âãÏÓ\n"
         self._body = ""
