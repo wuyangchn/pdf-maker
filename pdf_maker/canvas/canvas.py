@@ -28,9 +28,7 @@ class Canvas(Area):
         if self._clip_outside_plot_areas:
             self.clip_outside_plotareas()
 
-    def add_plot_area(self, plt: PlotArea = None, name: str = None,
-                      plot_area: List[Union[int, float], ...] = (0, 0, 0, 0),
-                      plot_scale: List[Union[int, float], ...] = (0, 100, 0, 100), **options):
+    def add_plot_area(self, plt: PlotArea = None, name: str = None, plot_area=None, plot_scale=None, **options):
         """
         Args:
             plt: PlotArea instance
@@ -42,6 +40,10 @@ class Canvas(Area):
         Returns:
 
         """
+        if plot_area is None:
+            plot_area = [0, 0, 0, 0]
+        if plot_scale is None:
+            plot_scale = [0, 100, 0, 100]
         if plt is None and name is not None:
             plot_width, plot_height = self._width * plot_area[2], self._height * plot_area[3]
             margin_left = self._margin_left + self._width * plot_area[0]

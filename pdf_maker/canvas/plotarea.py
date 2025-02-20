@@ -9,19 +9,19 @@
 #
 # 
 """
-from typing import List, Tuple, Union
+from typing import List, Union
 from types import MethodType
-from .area import Area, Text, Line, Scatter, Rect, COLOR_PALETTE, KEYNAMES
+from .area import Area, KEYNAMES
 from .._utils.warns import custom_warn
 import warnings
 warnings.showwarning = custom_warn
 
 
 class PlotArea(Area):
-    def __init__(self, name: str, scale: List[Union[int, float, str], ...], **options):
+    def __init__(self, name: str, scale: List[Union[int, float, str]], **options):
         super(PlotArea, self).__init__(**options)
         self._name = name
-        self._scale: List[Union[int, float, str], ...] = [float(i) for i in scale]
+        self._scale: List[Union[int, float, str]] = [float(i) for i in scale]
         self._clip_outside = True
 
     def ppu(self, axis: str):
@@ -34,7 +34,7 @@ class PlotArea(Area):
         else:
             raise KeyError(f"axis mush be given as one of x or y, got {axis} instead.")
 
-    def scale(self, scale: Tuple[Union[int, float], ...] = None):
+    def scale(self, scale: List[Union[int, float]] = None):
         if scale is not None:
             self._scale = scale
         return self._scale

@@ -1,5 +1,8 @@
 # to do
 
+## v0.0.54 2025-02-20
+* Fix: Typing error
+
 ## v0.0.53 2025-02-20
 * Update: rect clip
 
