@@ -46,23 +46,23 @@ class PlotArea(Area):
         y = (y - self._scale[2]) * self.ppu("y") + self._margin_bottom
         return x, y
 
-    def clip_curve(self, x, y, func_y: MethodType, func_x: MethodType, x_clip=True, y_clip=True):
-        if not self.is_out_side(x, y):
+    def clip_curve(self, x, y, func_y: MethodType, func_x: MethodType, x_clip=True, y_clip=True, tolerance: float = 0.00000000001):
+        if not self.is_out_side(x, y, tolerance=tolerance):
             return x, y
         if func_y is None:
             if y_clip:
-                if self._margin_bottom <= y <= self._margin_bottom + self._height:
+                if self._margin_bottom - tolerance <= y <= self._margin_bottom + self._height + tolerance:
                     return
                 else:
                     return x, self._margin_bottom if y < self._margin_bottom else self._margin_bottom + self._height
         if func_x is None:
             if x_clip:
-                if self._margin_left <= x <= self._margin_left + self._width:
+                if self._margin_left <= x <= self._margin_left + self._width + tolerance:
                     return
                 else:
                     return self._margin_left if x < self._margin_left else self._margin_left + self._width, y
         if x_clip:
-            if func_y is None and not (self._margin_left <= x <= self._margin_left + self._width):
+            if func_y is None and not (self._margin_left <= x <= self._margin_left + self._width + tolerance):
                 return
             elif func_y is None:
                 func_y = lambda _x: y
@@ -72,7 +72,7 @@ class PlotArea(Area):
                 x = self._margin_left
             y = func_y(x)
         if y_clip:
-            if func_x is None and not (self._margin_bottom <= y <= self._margin_bottom + self._height):
+            if func_x is None and not (self._margin_bottom - tolerance <= y <= self._margin_bottom + self._height + tolerance):
                 return
             elif func_x is None:
                 func_x = lambda _y: x
@@ -81,11 +81,11 @@ class PlotArea(Area):
             if y < self._margin_bottom:
                 y = self._margin_bottom
             x = func_x(y)
-        if self.is_out_side(x, self._margin_bottom) and x_clip:
+        if self.is_out_side(x, self._margin_bottom, tolerance=tolerance) and x_clip:
             return
-        if self.is_out_side(self._margin_left, y) and y_clip:
+        if self.is_out_side(self._margin_left, y, tolerance=tolerance) and y_clip:
             return
-        if self.is_out_side(x, y) and (x_clip == y_clip):
+        if self.is_out_side(x, y, tolerance=tolerance) and (x_clip == y_clip):
             return
         return x, y
 
@@ -106,9 +106,9 @@ class PlotArea(Area):
         if _start is not None and _end is not None:
             return _start, _end
 
-    def is_out_side(self, x, y):
-        return not (self._margin_left <= x <= self._margin_left + self._width and
-                    self._margin_bottom <= y <= self._margin_bottom + self._height)
+    def is_out_side(self, x, y, tolerance: float = 0.00000000001):
+        return not (self._margin_left - tolerance <= x <= self._margin_left + tolerance + self._width and
+                    self._margin_bottom - tolerance <= y <= self._margin_bottom + tolerance + self._height)
 
     def text(self, x, y, coordinate="scale", clip: bool = True, **options):
         if options.get("name", "") in KEYNAMES:
@@ -137,12 +137,24 @@ class PlotArea(Area):
         return super(PlotArea, self).line(start=list(start), end=list(end), **options)
 
     def rect(self, left_bottom: Union[list, tuple], width: Union[int, float], height: Union[int, float],
-             coordinate: str = "scale", **options):
+             coordinate: str = "scale", clip: bool = True, **options):
         if options.get("name", "") in KEYNAMES:
             raise ValueError(f"{options.get('name')} is reserved name that cannot be used.")
         left_bottom = self.scale_to_points(*left_bottom, coordinate=coordinate)
         width = width * self.ppu(axis="x")
         height = height * self.ppu(axis="y")
+        if clip:
+            try:
+                left_bottom, left_top = self.clip_line(start=left_bottom, end=[left_bottom[0], left_bottom[1] + height])
+                right_bottom, right_top = self.clip_line(start=[left_bottom[0] + width, left_bottom[1]], end=[left_bottom[0] + width, left_bottom[1] + height])
+            except TypeError:
+                warnings.warn(f"The rect of {left_bottom = } {width = } {height = } is on the outside of the plot area, "
+                              f"and thus will have no effect.", UserWarning)
+                return
+            else:
+                width = abs(right_bottom[0] - left_bottom[0])
+                height = abs(left_top[1] - left_bottom[1])
+
         return super(PlotArea, self).rect(left_bottom=left_bottom, width=width, height=height, **options)
 
     def scatter(self, x: Union[int, float], y: Union[int, float], coordinate: str = "scale", **options):
