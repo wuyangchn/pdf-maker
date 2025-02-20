@@ -1,5 +1,8 @@
 # to do
 
+## v0.0.53 2025-02-20
+* Update: rect clip
+
 ## v0.0.52 2024-10-15
 * Update: support string for plot area scales
 
