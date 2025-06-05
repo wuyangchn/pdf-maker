@@ -40,6 +40,8 @@ class PlotArea(Area):
         return self._scale
 
     def scale_to_points(self, x, y, coordinate: str = "scale"):
+        x = float(x)
+        y = float(y)
         if coordinate != "scale":
             return x, y
         x = (x - self._scale[0]) * self.ppu("x") + self._margin_left

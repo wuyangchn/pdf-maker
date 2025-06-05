@@ -562,7 +562,8 @@ class Obj:
         if self.get_type() != "Stream":
             return ""
         if self._stream == "":
-            contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter], key=lambda obj: obj.z_index())
+            contents: List[BaseContent] = sorted([*self._text, *self._line, *self._rect, *self._scatter],
+                                                 key=lambda comp: comp.z_index())
             code = '\n'.join([obj.code() for obj in contents])
             self._bytes_length = len(code.encode())
             if self._filter == "ASCII85Decode":

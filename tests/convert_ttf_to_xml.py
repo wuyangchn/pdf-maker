@@ -11,7 +11,7 @@
 """
 from xml.etree import ElementTree
 from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
-from fontTools.ttLib import TTFont
+# from fontTools.ttLib import TTFont
 
 
 fonts = FONT_LIB.keys()

@@ -291,9 +291,21 @@ def case1():
     file.save()
 
 
+def test_sigma():
+    basefont = "ArialMT"
+    file = pm.NewPDF(filepath="test_sigma.pdf", _basefont=basefont)
+    color = "red"
+    # the below two texts will use default basefont of the page, which is ArialMT
+    file.text(page=0, x=200, y=500, line_space=1, size=12, base=0, rotate=0, color=color,
+              h_align="left", v_align="bottom", text=f"sigma σ {chr(0x03c3)}")
+    # save pdf
+    file.save()
+
+
 if __name__ == "__main__":
     # case2()
     # test_rotate()
     # case1()
-    test_create_a_pdf()
+    # test_create_a_pdf()
+    test_sigma()
     pass

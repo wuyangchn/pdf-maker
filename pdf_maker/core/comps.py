@@ -10,7 +10,7 @@
 # 
 """
 import re
-from fontTools.ttLib import TTFont
+# from fontTools.ttLib import TTFont
 from pdf_maker.constants._global import FONT_LIB, COLOR_PALETTE, LINE_STYLE, WIND
 from typing import Tuple, Union, List, Mapping
 from xml.etree import ElementTree
@@ -46,15 +46,17 @@ class BaseContent:
     def code(self):
         return ""
 
-    def name(self):
-        return self._name
+    def name(self) -> str:
+        return str(self._name)
 
-    def z_index(self):
-        return self._z_index
+    def z_index(self) -> int:
+        return int(self._z_index)
 
     def align(self):
-        self._x, self._y = self._align(self._x, self._y, self._h_align,
-                                       self._v_align, self._width, self._height, self._rotate)
+        self._x, self._y = self._align(
+            self._x, self._y, self._h_align,
+            self._v_align, self._width, self._height, self._rotate
+        )
 
     @staticmethod
     def _align(x, y, h_align, v_align, width, height, rotate):
