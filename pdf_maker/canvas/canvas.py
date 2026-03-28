@@ -76,10 +76,9 @@ class Canvas(Area):
         x, y = self.unit_to_points(x, y, unit)
         return super(Canvas, self).text(x=x, y=y, **options)
 
-    def line(self, start: List[int], end: List[int], unit="pt", **options):
-        start = self.unit_to_points(*start, unit)
-        end = self.unit_to_points(*end, unit)
-        return super(Canvas, self).line(start=list(start), end=list(end), **options)
+    def line(self, points:list, unit="pt", **options):
+        points = [self.unit_to_points(*point, unit) for point in points]
+        return super(Canvas, self).line(points=points, **options)
 
     def rect(self, left_bottom: Union[list, tuple], width: Union[int, float], height: Union[int, float],
              unit: str = "pt", **options):

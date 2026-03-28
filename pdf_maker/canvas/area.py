@@ -41,6 +41,7 @@ class Area:
                     setattr(self, name, value)
 
         if show_frame:
+            options.pop('z_index')
             self.show_frame(z_index=self._z_index, **options)
 
     def ppi(self, ppi: int = None):
@@ -76,8 +77,7 @@ class Area:
                     rect[0] + diff[0], rect[1] + diff[1], *rect[2:]
                 ) for rect in comp._wind_inside_rects]
         if isinstance(comp, Line):
-            comp._start = [comp._start[0] + diff[0], comp._start[1] + diff[1]]
-            comp._end = [comp._end[0] + diff[0], comp._end[1] + diff[1]]
+            comp._points = [[_point[0] + diff[0], _point[1] + diff[1]] for _point in comp._points]
         return comp
 
     def height(self):
@@ -132,13 +132,12 @@ class Area:
         self._components.append(text)
         return text
 
-    def line(self, start: List[int], end: List[int], width: Union[float, int] = None,
-             color: Union[tuple, list, str] = None, **options):
+    def line(self, points: list, width: Union[float, int] = None, color: Union[tuple, list, str] = None, **options):
         if width is None:
             width = 0.5
         if color is None:
             color = "black"
-        line = Line(start=start, end=end, color=color, width=width, **options)
+        line = Line(points=points, color=color, width=width, **options)
         self._components.append(line)
         return line
 

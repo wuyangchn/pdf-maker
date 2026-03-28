@@ -232,7 +232,7 @@ class NewPDF:
         contents_page.text(text)  # add text component to the content object
         return text
 
-    def line(self, page: int, start: Union[list, tuple], end: Union[list, tuple], base: int = 1,
+    def line(self, page: int, points: Union[list, tuple], base: int = 1,
              width: Union[float, int] = None, color: Union[tuple, list, str] = None, **options):
         if width is None:
             width = 0.5
@@ -240,7 +240,7 @@ class NewPDF:
             color = "black"
         page = self.get_page(index=page, base=base)
         contents_page = self.get_obj(index=page.get_contents_index())
-        line = Line(start=start, end=end, color=color, width=width, **options)
+        line = Line(points=points, color=color, width=width, **options)
         contents_page.line(line)
         return line
 

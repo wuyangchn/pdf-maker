@@ -253,9 +253,8 @@ class Text(BaseContent):
 
 
 class Line(BaseContent):
-    def __init__(self, start, end, **options):
-        self._start = start
-        self._end = end
+    def __init__(self, points, **options):
+        self._points = points
         self._width = 1
         self._line_style = "solid"  # 'solid', 'dashed', 'dotted', 'densely_dotted',
                                     # 'densely_dashed', 'loosely_dashed', 'loosely_dotted'
@@ -264,72 +263,60 @@ class Line(BaseContent):
 
         super().__init__(**options)
 
-        # self.code()
-        self._check_caps()
-
-    def _check_caps(self):
-        if self._line_caps == "square":
-            if (self._end[1] - self._start[1]) ** 2 + (self._end[0] - self._start[0]) ** 2 != 0:
-                alpha = asin(abs(self._end[1] - self._start[1]) / (
-                        (self._end[1] - self._start[1]) ** 2 + (self._end[0] - self._start[0]) ** 2) ** .5)
-                self._start = (
-                    self._start[0] + (self._width / 2 * cos(alpha) * (1 if self._start[0] >= self._end[0] else -1)),
-                    self._start[1] + (self._width / 2 * sin(alpha) * (1 if self._start[1] >= self._end[1] else -1)))
-                self._end = (
-                    self._end[0] + (self._width / 2 * cos(alpha) * (1 if self._end[0] >= self._start[0] else -1)),
-                    self._end[1] + (self._width / 2 * sin(alpha) * (1 if self._end[1] >= self._start[1] else -1)))
-            else:
-                pass
-
-    def code(self, start=None, end=None, lt: str = None):
-        if start is None or end is None:
-            start, end = self._start, self._end
-        if lt is None:
-            lt = self._line_style
-        distance = ((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2) ** .5
-        if distance == 0:
-            return ""
-        if lt == "solid":
-            color = " ".join([str(i) for i in self._color])
-            start = " ".join([str(i) for i in start])
-            end = " ".join([str(i) for i in end])
-            code = f"{str(self._width)} w\n{color} RG\n{start} m\n{end} l\nS"
-        elif lt in ["dashed", "dotted", "densely_dotted", "densely_dashed", "loosely_dashed", "loosely_dotted"]:
-            dash_length = LINE_STYLE[lt][0]
-            blank_length = LINE_STYLE[lt][1]
-            step_x = (dash_length + blank_length) / distance * (end[0] - start[0])
-            step_y = (dash_length + blank_length) / distance * (end[1] - start[1])
-            add_x = dash_length / distance * (end[0] - start[0])
-            add_y = dash_length / distance * (end[1] - start[1])
-            code = "\n".join([self.code(
-                start=[start[0] + i * step_x, start[1] + i * step_y],
-                end=[start[0] + i * step_x + add_x, start[1] + i * step_y + add_y],
-                lt="solid") for i in range(int(distance // (dash_length + blank_length) + 1))]
-            )
-        elif lt == "dashdot":
-            step_x = sum(LINE_STYLE[lt]) / distance * (end[0] - start[0])
-            step_y = sum(LINE_STYLE[lt]) / distance * (end[1] - start[1])
-            add_x_1 = LINE_STYLE[lt][0] / distance * (end[0] - start[0])
-            add_y_1 = LINE_STYLE[lt][0] / distance * (end[1] - start[1])
-            add_x_2 = sum(LINE_STYLE[lt][:2]) / distance * (end[0] - start[0])
-            add_y_2 = sum(LINE_STYLE[lt][:2]) / distance * (end[1] - start[1])
-            add_x_3 = sum(LINE_STYLE[lt][:3]) / distance * (end[0] - start[0])
-            add_y_3 = sum(LINE_STYLE[lt][:3]) / distance * (end[1] - start[1])
-            code = "\n".join(
-                ["\n".join([
-                    self.code(
-                        start=[start[0] + i * step_x, start[1] + i * step_y],
-                        end=[start[0] + i * step_x + add_x_1, start[1] + i * step_y + add_y_1],
-                        lt="solid"),
-                    self.code(
-                        start=[start[0] + i * step_x + add_x_2, start[1] + i * step_y + add_y_2],
-                        end=[start[0] + i * step_x + add_x_3, start[1] + i * step_y + add_y_3],
-                        lt="solid"),
-                ]) for i in range(int(distance // sum(LINE_STYLE[lt]) + 1))]
-            )
-        else:
-            raise ValueError(f"line style must be one of f{', '.join(LINE_STYLE.keys())}, but got {lt} instead.")
+    def code(self, points=None, lt: str = None):
+        if points is None:
+            points = self._points
+        color = " ".join([str(i) for i in self._color])
+        start_code = " ".join([str(i) for i in points[0]])
+        code = f"{str(self._width)} w\n{color} RG\n{start_code} m\n"
+        code += " l\n".join([" ".join([str(i) for i in point]) for point in points[1:]])
+        code += " l\nS"
         return code
+
+        # distance = ((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2) ** .5
+        # if distance == 0:
+        #     return ""
+        # if lt == "solid":
+        #     color = " ".join([str(i) for i in self._color])
+        #     start = " ".join([str(i) for i in start])
+        #     end = " ".join([str(i) for i in end])
+        #     code = f"{str(self._width)} w\n{color} RG\n{start} m\n{end} l\nS"
+        # elif lt in ["dashed", "dotted", "densely_dotted", "densely_dashed", "loosely_dashed", "loosely_dotted"]:
+        #     dash_length = LINE_STYLE[lt][0]
+        #     blank_length = LINE_STYLE[lt][1]
+        #     step_x = (dash_length + blank_length) / distance * (end[0] - start[0])
+        #     step_y = (dash_length + blank_length) / distance * (end[1] - start[1])
+        #     add_x = dash_length / distance * (end[0] - start[0])
+        #     add_y = dash_length / distance * (end[1] - start[1])
+        #     code = "\n".join([self.code(
+        #         start=[start[0] + i * step_x, start[1] + i * step_y],
+        #         end=[start[0] + i * step_x + add_x, start[1] + i * step_y + add_y],
+        #         lt="solid") for i in range(int(distance // (dash_length + blank_length) + 1))]
+        #     )
+        # elif lt == "dashdot":
+        #     step_x = sum(LINE_STYLE[lt]) / distance * (end[0] - start[0])
+        #     step_y = sum(LINE_STYLE[lt]) / distance * (end[1] - start[1])
+        #     add_x_1 = LINE_STYLE[lt][0] / distance * (end[0] - start[0])
+        #     add_y_1 = LINE_STYLE[lt][0] / distance * (end[1] - start[1])
+        #     add_x_2 = sum(LINE_STYLE[lt][:2]) / distance * (end[0] - start[0])
+        #     add_y_2 = sum(LINE_STYLE[lt][:2]) / distance * (end[1] - start[1])
+        #     add_x_3 = sum(LINE_STYLE[lt][:3]) / distance * (end[0] - start[0])
+        #     add_y_3 = sum(LINE_STYLE[lt][:3]) / distance * (end[1] - start[1])
+        #     code = "\n".join(
+        #         ["\n".join([
+        #             self.code(
+        #                 start=[start[0] + i * step_x, start[1] + i * step_y],
+        #                 end=[start[0] + i * step_x + add_x_1, start[1] + i * step_y + add_y_1],
+        #                 lt="solid"),
+        #             self.code(
+        #                 start=[start[0] + i * step_x + add_x_2, start[1] + i * step_y + add_y_2],
+        #                 end=[start[0] + i * step_x + add_x_3, start[1] + i * step_y + add_y_3],
+        #                 lt="solid"),
+        #         ]) for i in range(int(distance // sum(LINE_STYLE[lt]) + 1))]
+        #     )
+        # else:
+        #     raise ValueError(f"line style must be one of f{', '.join(LINE_STYLE.keys())}, but got {lt} instead.")
+        # return code
 
 
 class Rect(BaseContent):

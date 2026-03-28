@@ -123,20 +123,19 @@ class PlotArea(Area):
                 return
         return super(PlotArea, self).text(x=x, y=y, **options)
 
-    def line(self, start: List[int], end: List[int], coordinate="scale", clip: bool = True,
-             x_clip=True, y_clip=True, **options):
+    def line(self, points: list, coordinate="scale", clip: bool = True, x_clip=True, y_clip=True, **options):
         if options.get("name", "") in KEYNAMES:
             raise ValueError(f"{options.get('name')} is reserved name that cannot be used.")
-        start = self.scale_to_points(*start, coordinate)
-        end = self.scale_to_points(*end, coordinate)
+        points = [self.scale_to_points(*point, coordinate) for point in points]
         if clip:
-            try:
-                start, end = self.clip_line(start, end, x_clip=x_clip, y_clip=y_clip)
-            except TypeError:
-                warnings.warn(f"The line from {start} to {end} is on the outside of the plot area, "
-                              f"and thus will have no effect.", UserWarning)
-                return
-        return super(PlotArea, self).line(start=list(start), end=list(end), **options)
+            for i in range(len(points) - 1):
+                try:
+                    points[i:i+2] = self.clip_line(points[i], points[i+1], x_clip=x_clip, y_clip=y_clip)
+                except TypeError:
+                    warnings.warn(f"The line from {points[i]} to {points[i+1]} is on the outside of the plot area, "
+                                  f"and thus will have no effect.", UserWarning)
+                    return
+        return super(PlotArea, self).line(points=points, **options)
 
     def rect(self, left_bottom: Union[list, tuple], width: Union[int, float], height: Union[int, float],
              coordinate: str = "scale", clip: bool = True, **options):

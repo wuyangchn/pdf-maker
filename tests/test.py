@@ -134,7 +134,7 @@ def case2():
 
     # isochron line
     line1: list = plot.line1.data
-    pt.line(start=line1[0], end=line1[1], clip=True, width=1, color='red')
+    pt.line(points=line1, clip=True, width=1, color='red')
 
     # split sticks
     xaxis.interval = (xaxis.max - xaxis.min) / xaxis.split_number
@@ -143,14 +143,14 @@ def case2():
         start = pt.scale_to_points(*(xaxis.min + xaxis.interval * i, yaxis.min))
         end = pt.scale_to_points(xaxis.min + xaxis.interval * i, yaxis.min)
         end = (end[0], start[1] - 5)
-        pt.line(start=start, end=end, width=1, line_style="solid", clip=False, coordinate="pt")
+        pt.line(points=[start, end], width=1, line_style="solid", clip=False, coordinate="pt")
         pt.text(x=start[0], y=end[1] - 15, text=f"{xaxis.min + xaxis.interval * i}", clip=False,
                 coordinate="pt", h_align="middle")
     for i in range(yaxis.split_number + 1):
         start = pt.scale_to_points(*(xaxis.min, yaxis.min + yaxis.interval * i))
         end = pt.scale_to_points(xaxis.min, yaxis.min + yaxis.interval * i)
         end = (start[0] - 5, end[1])
-        pt.line(start=start, end=end, width=1, line_style="solid", clip=False, coordinate="pt")
+        pt.line(points=[start, end], width=1, line_style="solid", clip=False, coordinate="pt")
         pt.text(x=end[0] - 5, y=end[1], text=f"{yaxis.min + yaxis.interval * i}", clip=False,
                 coordinate="pt", h_align="right", v_align="center")
 
@@ -173,7 +173,7 @@ def case2():
             clip=True, coordinate="scale", h_align="middle", v_align="center", rotate=0)
 
     file = pm.NewPDF(filepath="case2.pdf")
-    # as default, an empty pdf will have no page
+    # as default, an empty pdf will have one page
     file.add_page()
     # rich text tags should follow this priority: color > script > break
     file.text(page=0, x=300, y=780, line_space=1.2, size=24, base=0, h_align="middle",
@@ -297,15 +297,16 @@ def test_sigma():
     color = "red"
     # the below two texts will use default basefont of the page, which is ArialMT
     file.text(page=0, x=200, y=500, line_space=1, size=12, base=0, rotate=0, color=color,
-              h_align="left", v_align="bottom", text=f"sigma σ {chr(0x03c3)}")
+              h_align="left", v_align="bottom", text=f"sigmaaa σ {chr(0x03c3)}")
+    file.line(page=0, points=[(150, 100), (150, 400), (350, 400), (350, 200)], width=1, line_style="dashed")
     # save pdf
     file.save()
 
 
 if __name__ == "__main__":
-    # case2()
+    case2()
     # test_rotate()
     # case1()
     # test_create_a_pdf()
-    test_sigma()
+    # test_sigma()
     pass
