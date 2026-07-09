@@ -266,6 +266,8 @@ class Line(BaseContent):
     def code(self, points=None, lt: str = None):
         if points is None:
             points = self._points
+        if len(points) < 2:
+            return ""
         color = " ".join([str(i) for i in self._color])
         start_code = " ".join([str(i) for i in points[0]])
         code = f"{str(self._width)} w\n{color} RG\n{start_code} m\n"
@@ -396,3 +398,135 @@ class Scatter(BaseContent):
                    f"{' '.join(k7)} {' '.join(k8)} {' '.join(e4)} c\nh B"
         self._code = f"{line_width}\n{stroke_color}\n{fill_color}\n{line}"
         return self._code
+
+
+class Axis(BaseContent):
+    def __init__(self, **options):
+        """
+        Args:
+            **options:
+        """
+        """ text """
+        self._font_name = ""
+        self._font = ""
+        self._show_title = True
+        self._title = "Axis"
+        self._title_size = 9
+        self._title_h_align = "middle"
+        self._title_v_align = "center"
+        self._title_offset = [0, 0]
+        self._title_rotate = 0
+
+        """ scale """
+        self._x = 0
+        self._y = 0
+        self._line_length = 0
+        self._direction = 0
+        self._from = 0
+        self._to = 100
+        self._type = "linear"
+        self._line_width = 1
+        self._line_color = [0, 0, 0]
+        self._reverse = False
+        self._major_ticks_inc = 20
+        self._minor_ticks_count = 0
+        self._major_labels = []
+        self._minor_labels = [[]]
+        self._label_size = 8
+        self._label_rotate = 0
+
+        """ ticks """
+        self._major_length = 5                      # in pt
+        self._minor_length = 2                      # in pt
+        self._major_width = 1                       # in pt
+        self._minor_width = 1                       # in pt
+        self._show_labels = True
+        self._show_major_labels = True
+        self._show_minor_labels = False
+        self._show_ticks = True
+        self._show_major_ticks = True
+        self._show_minor_ticks = False
+        self._major_tick_direction = -1             # -1 = out, 0 = none, 1 = in
+        self._minor_tick_direction = 0              # -1 = out, 0 = none, 1 = in
+        self._label_type = "numeric"                # display type
+        self._label_factor = 1
+        self._label_h_align = "middle"
+        self._label_v_align = "center"
+        self._major_color = [0, 0, 0]
+        self._minor_color = [0, 0, 0]
+        self._label_offset = [0, 0]
+
+        """ components """
+        self._components: List[Union[Scatter, Text, Line, Rect]] = []
+
+        super().__init__(**options)
+
+        if not self._show_labels:
+            self._show_major_labels = self._show_minor_labels = False
+
+        if not self._show_ticks:
+            self._show_major_ticks = self._show_minor_ticks = False
+
+    def get_components(self):
+
+        self._components: List[Union[Scatter, Text, Line, Rect]] = []
+
+        points = [
+            (self._x, self._y),
+            (self._x + cos(self._direction / 180 * PI) * self._line_length,
+             self._y + sin(self._direction / 180 * PI) * self._line_length)
+        ]
+        self._components.append(Line(points=points, width=self._line_width, color=self._line_color))
+
+        if self._show_title:
+            self._components.append(
+                Text(x=(points[0][0] + points[1][0]) / 2 + self._title_offset[0],
+                     y=(points[0][1] + points[1][1]) / 2 + self._title_offset[1],
+                     text=f"{self._title}", clip=False, size=self._title_size,
+                     font_name=self._font_name, font=self._font, rotate=self._title_rotate,
+                     coordinate="pt", h_align=self._title_h_align, v_align=self._title_v_align))
+
+        r_inc = self._major_ticks_inc / abs(self._from - self._to)
+        major_label_count = int(abs(self._from - self._to) // self._major_ticks_inc) + 1
+        for idx in range(0, major_label_count):
+            mt_val = self._line_length * idx * r_inc
+            points = [
+                (self._x + cos(self._direction / 180 * PI) * mt_val,
+                 self._y + sin(self._direction / 180 * PI) * mt_val),
+                (self._x + cos(self._direction / 180 * PI) * mt_val + cos((self._direction + 90 * self._major_tick_direction) / 180 * PI) * self._major_length,
+                 self._y + sin(self._direction / 180 * PI) * mt_val + sin((self._direction + 90 * self._major_tick_direction) / 180 * PI) * self._major_length)
+            ]
+            if self._show_major_ticks:
+                self._components.append(Line(points=points, width=self._major_width, color=self._major_color))
+            if self._show_major_labels:
+                if idx < len(self._major_labels):
+                    label = self._major_labels[idx]
+                else:
+                    label = self._from + idx * self._major_ticks_inc
+                self._components.append(
+                    Text(x=points[1][0] + self._label_offset[0], y=points[1][1] + self._label_offset[1],
+                         text=f"{label:g}", clip=False, size=self._label_size,
+                         font_name=self._font_name, font=self._font, rotate=self._label_rotate,
+                         coordinate="pt", h_align=self._label_h_align, v_align=self._label_v_align))
+
+            for minor_idx in range(self._minor_ticks_count):
+                mt_val = self._line_length * r_inc * (idx + (minor_idx + 1) / (self._minor_ticks_count + 1))
+                if mt_val > self._line_length:
+                    continue
+                points = [
+                    (self._x + cos(self._direction / 180 * PI) * mt_val,
+                     self._y + sin(self._direction / 180 * PI) * mt_val),
+                    (self._x + cos(self._direction / 180 * PI) * mt_val + cos((self._direction + 90 * self._minor_tick_direction) / 180 * PI) * self._minor_length,
+                     self._y + sin(self._direction / 180 * PI) * mt_val + sin((self._direction + 90 * self._minor_tick_direction) / 180 * PI) * self._minor_length)
+                ]
+                if self._show_minor_ticks:
+                    self._components.append(Line(points=points, width=self._minor_width, color=self._minor_color))
+                if self._show_minor_labels:
+                    self._components.append(
+                        Text(x=points[1][0] + self._label_offset[0], y=points[1][1] + self._label_offset[1],
+                             text=f"{self._minor_labels[idx][minor_idx]}", clip=False, size=self._label_size,
+                             font_name=self._font_name, font=self._font, rotate=self._label_rotate,
+                             coordinate="pt", h_align=self._label_h_align, v_align=self._label_v_align))
+
+        return self._components
+

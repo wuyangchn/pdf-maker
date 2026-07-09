@@ -8,7 +8,7 @@
 # 
 """
 
-from .core.main import NewPDF, Obj, Text, Resources, Rect, Scatter, Line
+from .core.main import NewPDF, Obj, Text, Resources, Rect, Scatter, Line, Axis
 from .constants._global import FONT_LIB
-from .canvas import Canvas
+from .canvas import Canvas, PlotArea
 

@@ -12,7 +12,7 @@
 from typing import List, Union, Tuple
 import re
 from datetime import datetime, timezone, timedelta
-from .comps import BaseContent, Text, Scatter, Line, Rect, FONT_LIB
+from .comps import BaseContent, Text, Scatter, Line, Rect, Axis, FONT_LIB
 from xml.etree import ElementTree
 
 
@@ -72,6 +72,7 @@ class Obj:
         self._line: List[Line] = []
         self._rect: List[Rect] = []
         self._scatter: List[Scatter] = []
+        self._axis: List[Axis] = []
         self._subtype = ""
         self._offset: Union[str, int] = ""
         self._number: Union[str, int] = ""
@@ -596,6 +597,9 @@ class Obj:
 
     def scatter(self, scatter: Scatter):
         self._scatter.append(scatter)
+
+    def axis(self, axis: Axis):
+        self._axis.append(axis)
 
     def index(self):
         return str(self._index)

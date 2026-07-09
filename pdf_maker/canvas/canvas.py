@@ -12,6 +12,7 @@
 from typing import List, Tuple, Union, Mapping
 from .area import Area, COLOR_PALETTE
 from .plotarea import PlotArea
+from pdf_maker.core.comps import Axis
 
 
 class Canvas(Area):
@@ -91,7 +92,14 @@ class Canvas(Area):
         return super(Canvas, self).scatter(x=x, y=y, **options)
 
     def all_components(self):
-        return self._components + [comp for plt in self._plot_areas for comp in plt._components]
+        cv_comps = []
+        for plt in self._plot_areas:
+            for comp in plt._components:
+                if isinstance(comp, Axis):
+                    cv_comps.extend(comp.get_components())
+                else:
+                    cv_comps.append(comp)
+        return self._components + cv_comps
 
     def left_bottom(self, lb: Tuple[Union[int, float], ...] = None):
         """
@@ -104,7 +112,10 @@ class Canvas(Area):
         """
         if lb is not None:
             diff = [lb[0] - self._margin_left, lb[1] - self._margin_bottom]
-            for comp in self.all_components():
+            for plt in self._plot_areas:
+                for comp in plt._components:
+                    self.move_comp(comp, diff=diff)
+            for comp in self._components:
                 self.move_comp(comp, diff=diff)
             self._margin_left, self._margin_bottom = lb
 

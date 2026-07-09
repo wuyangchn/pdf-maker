@@ -13,16 +13,50 @@ from typing import List, Union
 from types import MethodType
 from .area import Area, KEYNAMES
 from .._utils.warns import custom_warn
+from ..core.objs import Obj
 import warnings
 warnings.showwarning = custom_warn
+
+DEFAULT_AXIS_CONFIG = {
+    "name": "NAME",
+    "x": 0,
+    "y": 0,
+    "line_length": 300,
+    "major_ticks_inc": 10,
+    "major_tick_direction": -1,
+    "major_width": 1,
+    "line_width": 1,
+    "major_labels": [],
+    "font_name": "",
+    "font": "",
+    "label_h_align": "middle",
+    "label_v_align": "top",
+    "label_offset": [0, 0],
+    "title_offset": [0, -20],
+    "title_rotate": 0,
+    "title": "Title",
+    "from": 0,
+    "to": 100,
+    "direction": 0,
+    "show_title": True,
+    "show_ticks": True,
+    "show_labels": True,
+    "show_major_ticks": True,
+    "show_minor_ticks": False,
+    "show_major_labels": True,
+    "show_minor_labels": False,
+}
 
 
 class PlotArea(Area):
     def __init__(self, name: str, scale: List[Union[int, float, str]], **options):
-        super(PlotArea, self).__init__(**options)
         self._name = name
         self._scale: List[Union[int, float, str]] = [float(i) for i in scale]
         self._clip_outside = True
+        self._background_color = 'none'
+        self._background_style = 'none'            # background color mode
+        self._font: Obj = ...
+        super(PlotArea, self).__init__(**options)
 
     def ppu(self, axis: str):
         def distance(x, y):
@@ -167,3 +201,71 @@ class PlotArea(Area):
                           f"and thus will have no effect.", UserWarning)
         else:
             return super(PlotArea, self).scatter(x=x, y=y, **options)
+
+    def axis(self, **options):
+        return super(PlotArea, self).axis(**options)
+
+    def xaxis_bottom(self, **options):
+
+        XAXIS_BOTTOM_CONFIG = DEFAULT_AXIS_CONFIG | {
+            "name": "XAXIS_BOTTOM",
+            "x": self._margin_left,
+            "y": self._margin_bottom,
+            "line_length": self._width,
+            "font_name": self._font._name,
+            "font": self._font._basefont,
+        } | options
+
+        return self.axis(**XAXIS_BOTTOM_CONFIG)
+
+    def xaxis_top(self, **options):
+
+        XAXIS_TOP_CONFIG = DEFAULT_AXIS_CONFIG | {
+            "name": "XAXIS_TOP",
+            "x": self._margin_left,
+            "y": self._margin_bottom + self._height,
+            "line_length": self._width,
+            "font_name": self._font._name,
+            "font": self._font._basefont,
+        } | options
+
+        return self.axis(**XAXIS_TOP_CONFIG)
+
+    def yaxis_left(self, **options):
+
+        YAXIS_LEFT_CONFIG = DEFAULT_AXIS_CONFIG | {
+            "name": "YAXIS_LEFT",
+            "x": self._margin_left,
+            "y": self._margin_bottom,
+            "line_length": self._height,
+            "font_name": self._font._name,
+            "font": self._font._basefont,
+            "direction": 90,
+            "title_rotate": 90,
+            "title_offset": [-35, 0],
+        } | options
+
+        return self.axis(**YAXIS_LEFT_CONFIG)
+
+    def yaxis_right(self, **options):
+
+        YAXIS_RIGHT_CONFIG = DEFAULT_AXIS_CONFIG | {
+            "name": "YAXIS_RIGHT",
+            "x": self._margin_left + self._width,
+            "y": self._margin_bottom,
+            "line_length": self._height,
+            "font_name": self._font._name,
+            "font": self._font._basefont,
+            "direction": 90,
+            "show_title": False,
+            "show_ticks": False,
+            "show_labels": False,
+        } | options
+
+        return self.axis(**YAXIS_RIGHT_CONFIG)
+
+    def set_background(self, color=None, style=None):
+        if color is not None: self._background_color = color
+        if style is not None: self._background_style = style
+
+

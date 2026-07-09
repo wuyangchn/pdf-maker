@@ -9,7 +9,7 @@
 #
 # 
 """
-from .objs import Obj, Resources, Text, Line, Rect, Scatter
+from .objs import Obj, Resources, Text, Line, Rect, Scatter, Axis
 from pdf_maker.canvas import PlotArea, Canvas
 from .crf import Crf
 from pdf_maker.constants._global import PAGE_SIZE, FONT_LIB, HALIGN, VALIGN, UNIT
@@ -358,8 +358,6 @@ class NewPDF:
         # get content object of this page
         contents_obj = self.get_obj(index=page.get_contents_index())
         for comp in canvas.all_components():
-            # print(comp.name())
-            # print(type(comp))
             if isinstance(comp, Text):
                 contents_obj.text(self._add_font_info_to_text(text=comp))
             if isinstance(comp, Rect):

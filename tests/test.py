@@ -303,10 +303,86 @@ def test_sigma():
     file.save()
 
 
+def test_axis():
+    """
+    Test axis
+    Returns:
+
+    """
+    basefont = "ArialMT"
+    file = pm.NewPDF(filepath="test_axis.pdf", _basefont=basefont)
+
+    # create a canvas
+    cv = pm.Canvas(width=8, height=5.5, unit="cm", show_frame=True, clip_outside_plot_areas=False)
+    # change frame outline style
+    cv.show_frame(color="red", line_width=1)
+
+    pt = pm.PlotArea(name="Plot1",
+                     margin_left=cv._margin_left + 45, width=cv._width - 60,
+                     margin_bottom=cv._margin_bottom + 30, height=cv._height - 35,
+                     scale=[0, 100, 0, 100], show_frame=False, font=file.get_obj(type='Font')[0]
+                     )
+
+    file_path = r'D:\PythonProjects\pdf-maker\venv\Lib\site-packages\ararpy\examples\22WHA0433.arr'
+    smp = ap.from_arr(file_path=file_path)
+
+    plot = smp.AgeSpectraPlot
+    x_title = f"Cumulative <sup>39</sup>Ar Released (%)"
+    y_title = f"Apparent Age (Ma)"
+
+    xaxis = plot.xaxis
+    yaxis = plot.yaxis
+    set1 = plot.set1
+    set2 = plot.set2
+    # age_results = smp.Info.results.age_spectra
+    age_results = smp.Info.results.age_plateau
+    xaxis_min = float(xaxis.min)
+    xaxis_max = float(xaxis.max)
+    yaxis_min = float(yaxis.min)
+    yaxis_max = float(yaxis.max)
+
+    plot_scale = [xaxis_min, xaxis_max, yaxis_min, yaxis_max]
+    pt.scale(plot_scale)
+
+    data = plot.data
+    colors = [[0, 0, 0], [0, 0, 0]]
+    widths = [int(float(plot.line1.line_width) / 2), int(float(plot.line2.line_width) / 2)]
+    styles = [plot.line1.line_type, plot.line2.line_type]
+    pt.line(points=[[x, y1] for x, y1, y2 in data], width=widths[0], line_style=styles[0], color=colors[0],
+            clip=True, line_caps="none", z_index=9)
+    pt.line(points=[[x, y2] for x, y1, y2 in data], width=widths[0], line_style=styles[0], color=colors[0],
+            clip=True, line_caps="none", z_index=9)
+
+    pt.xaxis_bottom(**{
+        'name': 'xAxis_top', "title": x_title,
+        "from": xaxis.min, "to": xaxis.max, "major_ticks_inc": xaxis.interval,
+    })
+    pt.xaxis_top(**{
+        'name': 'xAxis_bottom', "show_title": False, "show_ticks": False, "show_labels": False,
+    })
+    pt.yaxis_left(**{
+        'name': 'yAxis_left', "title": y_title, "title_offset": [-35, 0], "label_offset": [-1, 0],
+        "label_h_align": "right", "label_v_align": "center",
+        "from": yaxis.min, "to": yaxis.max, "major_ticks_inc": yaxis.interval, "minor_ticks_count": 1,
+        "major_tick_direction": 1,
+    })
+    pt.yaxis_right(**{
+        'name': 'yAxis_right', "show_title": False, "show_ticks": False, "show_labels": False,
+    })
+
+    cv.add_plot_area(plt=pt)
+
+    file.canvas(page=1, margin_top=2, margin_left=2, canvas=cv, unit="cm")
+
+    # save pdf
+    file.save()
+
+
 if __name__ == "__main__":
-    case2()
+    # case2()
     # test_rotate()
     # case1()
     # test_create_a_pdf()
     # test_sigma()
+    test_axis()
     pass

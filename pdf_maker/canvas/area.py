@@ -11,7 +11,7 @@
 """
 from typing import List, Tuple, Union
 from pdf_maker.constants._global import COLOR_PALETTE, UNIT, KEYNAMES
-from pdf_maker.core.comps import Text, Line, Scatter, Rect
+from pdf_maker.core.comps import Text, Line, Scatter, Rect, Axis
 
 
 class Area:
@@ -25,7 +25,7 @@ class Area:
 
         self._background_color: List[int] = [1, 1, 1]
         self._transparency: float = ...
-        self._components: List[Union[Text, Line, Scatter, Rect], ...] = []
+        self._components: List[Union[Text, Line, Scatter, Rect, Axis], ...] = []
         self._show_frame: bool = show_frames
         self._z_index = 9999
 
@@ -41,8 +41,7 @@ class Area:
                     setattr(self, name, value)
 
         if show_frame:
-            options.pop('z_index')
-            self.show_frame(z_index=self._z_index, **options)
+            self.show_frame(**(options | {'z_index': self._z_index}))
 
     def ppi(self, ppi: int = None):
         if ppi is not None:
@@ -67,8 +66,8 @@ class Area:
             y = y * UNIT[unit] * self._ppi
         return x, y
 
-    def move_comp(self, comp: Union[Text, Rect, Scatter, Line], diff: List[Union[int, float]]):
-        if isinstance(comp, (Text, Scatter)):
+    def move_comp(self, comp: Union[Text, Rect, Scatter, Line, Axis], diff: List[Union[int, float]]):
+        if isinstance(comp, (Text, Scatter, Axis)):
             comp._x, comp._y = comp._x + diff[0], comp._y + diff[1]
         if isinstance(comp, Rect):
             comp._x, comp._y = comp._x + diff[0], comp._y + diff[1]
@@ -90,14 +89,14 @@ class Area:
         return self._components
 
     def add_component(self, comp: Union[Text, Line, Scatter, Rect]):
-        if isinstance(comp, (Text, Line, Scatter, Rect)):
+        if isinstance(comp, (Text, Line, Scatter, Rect, Axis)):
             self._components.append(comp)
         else:
             raise TypeError(f"The component is not an instance of Text, Line, Scatter, "
                             f"or Rect, got a {type(comp)} instead.")
 
     def del_component(self, comp: Union[Text, Line, Scatter, Rect]):
-        if isinstance(comp, (Text, Line, Scatter, Rect)):
+        if isinstance(comp, (Text, Line, Scatter, Rect, Axis)):
             self._components.remove(comp)
         else:
             raise TypeError(f"The component is not an instance of Text, Line, Scatter, "
@@ -162,3 +161,8 @@ class Area:
         scatter = Scatter(x=x, y=y, size=size, fill_color=fill_color, stroke_color=stroke_color, **options)
         self._components.append(scatter)
         return scatter
+
+    def axis(self, **options):
+        axis = Axis(**options)
+        self._components.append(axis)
+        return axis
