@@ -21,8 +21,8 @@ FONT_LIB = {
     "ArialMT".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font/arial.xml"),  # do not use "font\\xxx.xx"
                                                               # because this cannot be recognized in unix system
-        # "ttf_file": os.path.join(SOURCE_ROOT, "font/arial.ttf"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset/arial-subset.ttf"),
+        "unicode_ttf_file": os.path.join(SOURCE_ROOT, "font/arial.ttf"),
         "type": "TrueType",
         "line_height": 0.66748046875,
         "units_per_em": 2048,
@@ -35,7 +35,7 @@ FONT_LIB = {
     "Calibri".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font/calibri.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset/calibri-subset.ttf"),
-        # "ttf_file": os.path.join(SOURCE_ROOT, "font/calibri.ttf"),
+        "unicode_ttf_file": os.path.join(SOURCE_ROOT, "font/calibri.ttf"),
         "type": "TrueType", "postScriptName": "Calibri",
         "line_height": 0.66748046875,
         "units_per_em": 2048,
@@ -48,6 +48,7 @@ FONT_LIB = {
     "Helvetica".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font/helvetica.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset/helvetica-subset.ttf"),
+        "unicode_ttf_file": os.path.join(SOURCE_ROOT, "font/helvetica.ttf"),
         "type": "TrueType", "postScriptName": "Helvetica",
         "line_height": 0.60986328125,
         "units_per_em": 2048,
@@ -60,7 +61,7 @@ FONT_LIB = {
     "TimesNewRomanPSMT".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font/times.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset/times-subset.ttf"),
-        # "ttf_file": os.path.join(SOURCE_ROOT, "font/times.ttf"),
+        "unicode_ttf_file": os.path.join(SOURCE_ROOT, "font/times.ttf"),
         "type": "TrueType", "postScriptName": "TimesNewRomanPSMT",
         "line_height": 0.62744140625,
         "units_per_em": 2048,
@@ -74,7 +75,7 @@ FONT_LIB = {
     "MicrosoftSansSerif".lower(): {
         "file": os.path.join(SOURCE_ROOT, "font/micross.xml"),
         "ttf_file": os.path.join(SOURCE_ROOT, "subset/micross-subset.ttf"),
-        # "ttf_file": os.path.join(SOURCE_ROOT, "font/micross.ttf"),
+        "unicode_ttf_file": os.path.join(SOURCE_ROOT, "font/micross.ttf"),
         "type": "TrueType", "postScriptName": "MicrosoftSansSerif",
         "line_height": 0.64892578125,
         "units_per_em": 2048,

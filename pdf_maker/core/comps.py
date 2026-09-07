@@ -16,6 +16,10 @@ from typing import Tuple, Union, List, Mapping
 from xml.etree import ElementTree
 from math import sin, cos, pi as PI, acos, asin
 
+_SCRIPT_RE = re.compile(
+    r"<(?P<script>sub|sup)>(?P<content>.*?)</(?P=script)>",
+    re.DOTALL,
+)
 
 class BaseContent:
     def __init__(self, name: str = "", z_index: int = 0, x: int = 0, y: int = 0,
@@ -119,6 +123,7 @@ class Text(BaseContent):
         self._line_height = 0
         self._font_widths: Mapping[int, int] = ...
         self._units_per_em: int = 2048
+        self._font_obj = None
         self._dpi = 96    # points per inch, usually 72
         self._rotate = 0
 
@@ -149,8 +154,22 @@ class Text(BaseContent):
             f"{color} rg\n{color} RG\n"
             f"{self.Ts(script)} Ts\n"
             f"{f'0 -{self.get_line_height()} Td' if r == 'r' else ''}\n"
-            f"({item}) Tj" for (item, script, color, r) in text_list]) + "\nET"
+            f"({self.encode_text(item)}) Tj" for (item, script, color, r) in text_list]) + "\nET"
         return self._code
+
+    def encode_text(self, text):
+        if self._font_obj is not None:
+            return self._font_obj.encode_pdf_text(text)
+        # Text components created outside NewPDF retain the original behavior,
+        # but still escape PDF literal-string delimiters.
+        return (
+            text
+                .replace("\\", "\\\\")
+                .replace("(", "\\(")
+                .replace(")", "\\)")
+                .replace("\r", "\\r")
+                .replace("\n", "\\n")
+        )
 
     def get_line_height(self):
         # font_height = self.get_font_height(self._text, self._font)
@@ -160,6 +179,9 @@ class Text(BaseContent):
         return self._line_height
 
     def get_char_width(self, char: str):
+        if self._font_obj is not None:
+            width = self._font_obj.width_for_char(char)
+            return float(width) / float(self._units_per_em) * float(self._size) * 2
         if not isinstance(self._font_widths, dict):
             return 0
         # why we need to multiply 2
@@ -193,20 +215,48 @@ class Text(BaseContent):
                 return [i for item in text_list for i in self.read_color(item)]
         return [(rich_text, ' '.join([str(i) for i in self._color]))]
 
+    # def read_script(self, rich_text):
+    #     if rich_text.startswith("<sub>") and rich_text.endswith("</sub>"):
+    #         if not self._is_rich_text(rich_text.removeprefix("<sub>").removesuffix("</sub>")):
+    #             return [(rich_text.removeprefix("<sub>").removesuffix("</sub>"), "sub")]
+    #     if rich_text.startswith("<sup>") and rich_text.endswith("</sup>"):
+    #         if not self._is_rich_text(rich_text.removeprefix("<sup>").removesuffix("</sup>")):
+    #             return [(rich_text.removeprefix("<sup>").removesuffix("</sup>"), "sup")]
+    #     if "<sub>" in rich_text and "</sub>" in rich_text:
+    #         text_list = re.split(r"(<sub>.*?</sub>)", rich_text)
+    #         return [i for item in text_list for i in self.read_script(item)]
+    #     if "<sup>" in rich_text and "</sup>" in rich_text:
+    #         text_list = re.split(r"(<sup>.*?</sup>)", rich_text)
+    #         return [i for item in text_list for i in self.read_script(item)]
+    #     return [(rich_text, "normal")]
+
     def read_script(self, rich_text):
-        if rich_text.startswith("<sub>") and rich_text.endswith("</sub>"):
-            if not self._is_rich_text(rich_text.removeprefix("<sub>").removesuffix("</sub>")):
-                return [(rich_text.removeprefix("<sub>").removesuffix("</sub>"), "sub")]
-        if rich_text.startswith("<sup>") and rich_text.endswith("</sup>"):
-            if not self._is_rich_text(rich_text.removeprefix("<sup>").removesuffix("</sup>")):
-                return [(rich_text.removeprefix("<sup>").removesuffix("</sup>"), "sup")]
-        if "<sub>" in rich_text and "</sub>" in rich_text:
-            text_list = re.split(r"(<sub>.*?</sub>)", rich_text)
-            return [i for item in text_list for i in self.read_script(item)]
-        if "<sup>" in rich_text and "</sup>" in rich_text:
-            text_list = re.split(r"(<sup>.*?</sup>)", rich_text)
-            return [i for item in text_list for i in self.read_script(item)]
-        return [(rich_text, "normal")]
+        result = []
+        last_end = 0
+
+        for match in _SCRIPT_RE.finditer(rich_text):
+            if match.start() > last_end:
+                result.append((
+                    rich_text[last_end:match.start()],
+                    "normal",
+                ))
+
+            result.append((
+                match.group("content"),
+                match.group("script"),
+            ))
+            last_end = match.end()
+
+        if last_end < len(rich_text):
+            result.append((
+                rich_text[last_end:],
+                "normal",
+            ))
+
+        if not result:
+            result.append((rich_text, "normal"))
+
+        return result
 
     def read_break(self, rich_text: str):
         return [(t, "") if i == 0 else (t, "r") for i, t in enumerate(rich_text.split("<r>"))]
@@ -407,8 +457,8 @@ class Axis(BaseContent):
             **options:
         """
         """ text """
-        self._font_name = ""
-        self._font = ""
+        self._font_obj_name = ""  # font name defined in page resources, like F0, F1, ..., i.e. font._name
+        self._font_basefont = ""  # real font name, lick Arial, Times, ..., i.e. font._basefont
         self._show_title = True
         self._title = "Axis"
         self._title_size = 9
@@ -483,9 +533,10 @@ class Axis(BaseContent):
                 Text(x=(points[0][0] + points[1][0]) / 2 + self._title_offset[0],
                      y=(points[0][1] + points[1][1]) / 2 + self._title_offset[1],
                      text=f"{self._title}", clip=False, size=self._title_size,
-                     font_name=self._font_name, font=self._font, rotate=self._title_rotate,
+                     font_name=self._font_obj_name, font=self._font_basefont, rotate=self._title_rotate,
                      coordinate="pt", h_align=self._title_h_align, v_align=self._title_v_align))
-
+        self._from = float(self._from)
+        self._to = float(self._to)
         r_inc = self._major_ticks_inc / abs(self._from - self._to)
         major_label_count = int(abs(self._from - self._to) // self._major_ticks_inc) + 1
         for idx in range(0, major_label_count):
@@ -506,7 +557,7 @@ class Axis(BaseContent):
                 self._components.append(
                     Text(x=points[1][0] + self._label_offset[0], y=points[1][1] + self._label_offset[1],
                          text=f"{label:g}", clip=False, size=self._label_size,
-                         font_name=self._font_name, font=self._font, rotate=self._label_rotate,
+                         font_name=self._font_obj_name, font=self._font_basefont, rotate=self._label_rotate,
                          coordinate="pt", h_align=self._label_h_align, v_align=self._label_v_align))
 
             for minor_idx in range(self._minor_ticks_count):
@@ -525,7 +576,7 @@ class Axis(BaseContent):
                     self._components.append(
                         Text(x=points[1][0] + self._label_offset[0], y=points[1][1] + self._label_offset[1],
                              text=f"{self._minor_labels[idx][minor_idx]}", clip=False, size=self._label_size,
-                             font_name=self._font_name, font=self._font, rotate=self._label_rotate,
+                             font_name=self._font_obj_name, font=self._font_basefont, rotate=self._label_rotate,
                              coordinate="pt", h_align=self._label_h_align, v_align=self._label_v_align))
 
         return self._components

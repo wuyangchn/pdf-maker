@@ -1,5 +1,8 @@
 # to do
 
+## v0.62.4 2026-09-07
+* fix: greek letters
+
 ## v0.0.56 2025-06-04
 * Fix: minor issues
 

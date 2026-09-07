@@ -49,7 +49,7 @@ class Obj:
         self._prefix: str = ""
         self._filter: str = ""
         self._pages: str = ""
-        self._basefont = ""
+        self._basefont = ""  # actual name for Font objs
         self._name = ""  # font name, like F0, F1, ...
         self._font_name = ""  # actual name, like ArialMT, MicrosoftSansSerif
         self._index: int = index
@@ -97,6 +97,13 @@ class Obj:
         self._font_file = ""  # identifier of the font file stream object
         self._font_file_hex = ""
         self._font_file_bytes = b""
+
+
+        self._unicode_to_byte = {}
+        self._byte_to_glyph = {}
+        self._unicode_to_glyph = {}
+        self._glyph_widths = {}
+        self._encoding_obj = None
 
         for key, value in options.items():
             names = [key, f"_{key.lower()}"]
@@ -167,45 +174,147 @@ class Obj:
             OS_2_obj = root.find('OS_2')
             self._missing_width = int(int(OS_2_obj.find("xAvgCharWidth").attrib['value']) * self._width_scale)
             self._units_per_em = int(root.find('head').find('unitsPerEm').attrib['value'])
-            # print(pixels_per_em)
 
+            # Keep the font cmap so Unicode characters can be represented by a
+            # one-byte PDF simple-font encoding.  The glyph name is then listed
+            # in the encoding object's /Differences array.
             chars = {}
-            self._differences = []
             for map_obj in map_objs:
-                chars.update({int(map_obj.attrib.get("code"), 16): {"name": map_obj.attrib.get("name")}})
-                # self._differences.append(f"{int(map_obj.attrib.get('code'), 16)} /{map_obj.attrib.get('name')}")
-
-            chars_list = [(code, str(char['name']), str(self._missing_width), "0") for code, char in chars.items()]
-            chars_list = sorted(chars_list, key=lambda x: x[0])
-            char_names = [char[1] for char in chars_list]
-            char_codes = [char[0] for char in chars_list]
+                code = int(map_obj.attrib.get("code"), 16)
+                chars.setdefault(code, map_obj.attrib.get("name"))
 
             mtx_list = [(mtx.attrib.get('name'), mtx.attrib.get('width'), mtx.attrib.get('lsb')) for mtx in mtx_objs]
+            self._unicode_to_glyph = chars
+            self._glyph_widths = {
+                name: int(int(width) * self._width_scale)
+                for name, width, _lsb in mtx_list
+            }
 
-            # 选取ASCII 255个标准字符
+            # Preserve native cp1252 bytes for characters covered by WinAnsi.
+            # Other glyphs receive an unused byte slot when first used.
+            self._unicode_to_byte = {}
+            self._byte_to_glyph = {}
+            for code, glyph in chars.items():
+                try:
+                    encoded = chr(code).encode("cp1252")
+                except (UnicodeEncodeError, ValueError):
+                    continue
+                if len(encoded) == 1:
+                    self._unicode_to_byte[code] = encoded[0]
+
             self._first_char = font['first_char']
             self._last_char = font['last_char']
-            for i in range(self._first_char, self._last_char + 1):
-                if i not in char_codes:
-                    chars_list.append((i, "", f"{self._missing_width}", "0"))
-                else:
-                    name = char_names[char_codes.index(i)]
-                    index = [mtx[0] for mtx in mtx_list].index(name)
-                    if index != -1:
-                        chars_list[char_codes.index(i)] = (
-                            i, name, f"{int(int(mtx_list[index][1]) * self._width_scale)}", mtx_list[index][2])
-            chars_list = sorted(chars_list, key=lambda x: x[0])
-            self._widths = [char[2] for char in chars_list[self._first_char:(self._last_char + 1)]]
+            self._widths = [str(self._missing_width)] * (self._last_char - self._first_char + 1)
+            for code, glyph in chars.items():
+                byte = self._unicode_to_byte.get(code)
+                if byte is None or not self._first_char <= byte <= self._last_char:
+                    continue
+                self._widths[byte - self._first_char] = str(
+                    self._glyph_widths.get(glyph, self._missing_width)
+                )
 
         # obtain font file stream
         if self.get_type() == "FontFileStream":
-            file = FONT_LIB.get(str(self._font_name).lower())['ttf_file']
+            font = FONT_LIB.get(str(self._font_name).lower())
+            file = font.get("unicode_ttf_file", font["ttf_file"])
             self._font_file_bytes = open(file, 'rb').read()
             hex_stream = self._font_file_bytes.hex()
             # separate stream based on fixed width
             self._font_file_hex = "\n".join(
                 [hex_stream[i * 64: (i + 1) * 64] for i in range(len(hex_stream) // 64)] + [hex_stream[len(hex_stream) // 64 * 64:]])
             self._font_file_hex += ">\n"
+
+    def set_encoding_object(self, encoding_obj):
+        """Attach the PDF encoding object used by this font."""
+        self._encoding_obj = encoding_obj
+        self._sync_encoding()
+
+    def _sync_encoding(self):
+        if self._encoding_obj is None:
+            return
+        differences = []
+        for byte, glyph in sorted(self._byte_to_glyph.items()):
+            differences.extend([str(byte), f"/{glyph}"])
+        self._encoding_obj._differences = differences
+
+    def _allocate_unicode_byte(self, codepoint):
+        glyph = self._unicode_to_glyph.get(codepoint)
+        if glyph is None:
+            return None
+
+        # Reuse an existing slot when multiple Unicode code points share a glyph.
+        for byte, assigned_glyph in self._byte_to_glyph.items():
+            if assigned_glyph == glyph:
+                self._unicode_to_byte[codepoint] = byte
+                return byte
+
+        # Control/undefined WinAnsi slots are least likely to be used by callers.
+        # The remaining slots are still valid once listed in /Differences.
+        candidates = list(range(0, 32)) + [127] + [129, 141, 143, 144, 157] \
+            + list(range(128, 160)) + list(range(160, 256)) + list(range(32, 127))
+        used = set(self._byte_to_glyph)
+        try:
+            byte = next(candidate for candidate in candidates if candidate not in used)
+        except StopIteration as exc:
+            raise ValueError(
+                f"Font {self._basefont} cannot encode more than 256 distinct glyphs in a PDF simple font"
+            ) from exc
+
+        self._unicode_to_byte[codepoint] = byte
+        self._byte_to_glyph[byte] = glyph
+        width = self._glyph_widths.get(glyph, self._missing_width)
+        if self._first_char <= byte <= self._last_char:
+            self._widths[byte - self._first_char] = str(width)
+        return byte
+
+    def byte_for_char(self, char):
+        codepoint = ord(char)
+        glyph = self._unicode_to_glyph.get(codepoint)
+        byte = self._unicode_to_byte.get(codepoint)
+        if byte is not None:
+            assigned_glyph = self._byte_to_glyph.get(byte)
+            if assigned_glyph is None or assigned_glyph == glyph:
+                return byte
+            # A custom mapping occupied the character's native WinAnsi slot.
+            return self._allocate_unicode_byte(codepoint)
+        if glyph is not None:
+            return self._allocate_unicode_byte(codepoint)
+
+        # Preserve the old behavior for characters absent from the font metadata:
+        # WinAnsi characters remain renderable, while unsupported Unicode falls
+        # back to the question-mark glyph instead of emitting invalid UTF-8 bytes.
+        try:
+            encoded = char.encode("cp1252")
+        except (UnicodeEncodeError, ValueError):
+            return ord("?")
+        return encoded[0]
+
+    def prepare_text(self, text):
+        for char in text:
+            self.byte_for_char(char)
+        self._sync_encoding()
+
+    def encode_pdf_text(self, text):
+        self.prepare_text(text)
+        encoded = []
+        for char in text:
+            byte = self.byte_for_char(char)
+            if byte in (0x28, 0x29, 0x5C):
+                encoded.append("\\" + chr(byte))
+            elif 32 <= byte <= 126:
+                encoded.append(chr(byte))
+            else:
+                encoded.append(f"\\{byte:03o}")
+        return "".join(encoded)
+
+    def width_for_char(self, char):
+        glyph = self._unicode_to_glyph.get(ord(char))
+        if glyph is not None:
+            return self._glyph_widths.get(glyph, self._missing_width)
+        byte = self.byte_for_char(char)
+        if self._first_char <= byte <= self._last_char:
+            return int(self._widths[byte - self._first_char])
+        return self._missing_width
 
     def get_type(self):
         return self._type

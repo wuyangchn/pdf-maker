@@ -143,6 +143,7 @@ class NewPDF:
         font = self.add_obj(type="Font", subtype=font_subtype, name=self._font_names[-1],
                             basefont=name, width_scale=width_scale, encoding=encoding.index(),
                             font_descriptor=font_descriptor.index())
+        font.set_encoding_object(encoding)
         # add font to all pages
         page_objs = self.get_obj(type="Page")
         fonts = self.get_obj(type="Font")
@@ -388,6 +389,8 @@ class NewPDF:
         font_widths = dict(zip(list(char_range), [int(i) for i in font._widths]))
         text._font_widths = font_widths
         text._units_per_em = font._units_per_em
+        text._font_obj = font
+        font.prepare_text(text._text)
         return text
 
 
